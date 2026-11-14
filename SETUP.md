@@ -20,7 +20,7 @@ rsvp-apps-script.gs  ← paste into Google Apps Script (step 1)
 
 Replies go straight into a Google Sheet you own. Nothing is stored on the website itself.
 
-1. Create a new Google Sheet, e.g. **"L&Y RSVPs"**.
+1. Open the sheet: [Lorena & Youssef RSVPs](https://docs.google.com/spreadsheets/d/15oD-VwML5bh8gI1vzdWTgQPuL9c1Pfb2T51_dQW86GM/edit) (already has the Summary, Guests, RSVPs and Log tabs).
 2. **Extensions → Apps Script**. Delete the sample code, paste all of `rsvp-apps-script.gs`, click **Save**.
    - Optional: set `NOTIFY_EMAIL` at the top to your address to get an email for every reply.
 3. **Deploy → New deployment →** gear icon **→ Web app**
