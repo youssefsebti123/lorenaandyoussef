@@ -49,17 +49,14 @@ Until step 5 is done, the RSVP page shows a banner saying replies can't be sent 
 - **Domain:** `lorenaandyoussef.com`, registered at Porkbun on 14 Nov 2026, expires 14 Nov 2027 — keep auto-renew on until after the wedding.
 - **Hosting:** GitHub Pages, publishing the `docs/` folder of this repo. Free, HTTPS included. `docs/CNAME` holds the domain.
 - **To update the site:** edit files in `docs/`, commit, push to `main`. It's live about a minute later.
-- **DNS at Porkbun** (Domain Management → DNS) must contain:
+- **DNS at Porkbun** (Domain Management → DNS) — set on 14 Nov 2026:
 
   | Type | Host | Answer |
   |---|---|---|
-  | A | *(blank)* | 185.199.108.153 |
-  | A | *(blank)* | 185.199.109.153 |
-  | A | *(blank)* | 185.199.110.153 |
-  | A | *(blank)* | 185.199.111.153 |
+  | ALIAS | *(blank)* | youssefsebti123.github.io |
   | CNAME | www | youssefsebti123.github.io |
 
-  and none of Porkbun's default parking records (ALIAS / CNAME to `pixie.porkbun.com`).
+  These replaced Porkbun's parking records (`uixie.porkbun.com`). The MX/TXT records Porkbun added for email forwarding were left as they are.
 
 The site tells search engines not to index it (`robots.txt` + `noindex`), so it only reaches people you send the link to.
 
