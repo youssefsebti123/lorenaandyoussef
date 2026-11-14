@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RSVP · Lorena &amp; Youssef</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#3A1510">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/config.js" defer></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body class="rsvp">
+<a class="skip" href="#main">Skip to content</a>
+<div class="room" style="background-image:url(assets/img/courtyard.webp)" aria-hidden="true"></div>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Lorena &amp; Youssef — home">L&amp;Y</a>
+  <nav aria-label="Main"><ul class="nav">
+    <li><a href="celebration.html">Celebration</a></li>
+    <li><a href="stay.html">Stay &amp; Travel</a></li>
+    <li><a href="details.html">Details</a></li>
+    <li><a href="rsvp.html" aria-current="page">RSVP</a></li>
+  </ul></nav>
+</header>
+
+<main id="main" class="wrap">
+  <p class="notice" id="not-ready" hidden>RSVPs aren’t connected yet — replies can’t be sent from this copy of the site. (Set the endpoint in <code>assets/config.js</code>.)</p>
+
+  <div id="ask">
+    <div class="center">
+      <h1 class="title">Will you join us?</h1>
+      <p class="sub">Let us know for Thursday, Friday and Saturday.</p>
+      <p class="note">Kindly reply by 31 December 2026.</p>
+    </div>
+
+    <form class="form" id="rsvp-form" novalidate>
+      <p class="body center">Enter your name as it appears on your invitation.</p>
+      <div class="formrow">
+        <div class="field"><label for="first">First name</label><input id="first" name="first" autocomplete="given-name" maxlength="80" required></div>
+        <div class="field"><label for="last">Last name</label><input id="last" name="last" autocomplete="family-name" maxlength="80" required></div>
+      </div>
+
+      <fieldset class="resp"><legend><span class="item">Thursday 6 · Marrakech day</span><span class="note">Dinner plans are provisional</span></legend>
+        <div class="yn"><label><input type="radio" name="thursday" value="Attending" required> Yes</label><label><input type="radio" name="thursday" value="Not attending"> No</label></div></fieldset>
+      <fieldset class="resp"><legend><span class="item">Friday 7 · Welcome drinks</span><span class="note">5 – 10 pm · No dinner</span></legend>
+        <div class="yn"><label><input type="radio" name="friday" value="Attending" required> Yes</label><label><input type="radio" name="friday" value="Not attending"> No</label></div></fieldset>
+      <fieldset class="resp"><legend><span class="item">Saturday 8 · The wedding</span><span class="note">Ceremony at 4 pm</span></legend>
+        <div class="yn"><label><input type="radio" name="saturday" value="Attending" required> Yes</label><label><input type="radio" name="saturday" value="Not attending"> No</label></div></fieldset>
+
+      <div class="field" style="margin-top:22px"><label for="email">Email</label><span class="hint" id="email-hint">We’ll send a copy of your reply here.</span><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required aria-describedby="email-hint"></div>
+      <div class="field"><label for="party">Also replying for (optional)</label><span class="hint" id="party-hint">Names of anyone else on your invitation, with the same answers as you.</span><input id="party" name="party" maxlength="300" aria-describedby="party-hint"></div>
+      <div class="formrow">
+        <div class="field"><label for="dietary">Dietary needs or allergies (optional)</label><textarea id="dietary" name="dietary" maxlength="1000"></textarea></div>
+        <div class="field"><label for="thursdayNotes">Joining only part of Thursday? (optional)</label><textarea id="thursdayNotes" name="thursdayNotes" maxlength="1000"></textarea></div>
+      </div>
+      <div class="field hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+
+      <div class="center">
+        <button class="btn solid" id="send" type="submit">Send my reply</button>
+        <p class="msg" id="msg" role="status" aria-live="polite"></p>
+        <p class="note it">Can’t find your invitation? Message us on WhatsApp.</p>
+      </div>
+    </form>
+  </div>
+
+  <div id="done" class="center" hidden tabindex="-1">
+    <p class="eyebrow">RSVP received</p>
+    <h1 class="title" id="thanks">Thank you.</h1>
+    <p class="sub" id="done-sub">Your reply has been saved.</p>
+    <h2 class="item" style="margin-top:26px">Your plans</h2>
+    <div class="rows plans" id="plans"></div>
+    <p class="note">You can change your reply any time before 31 December 2026.</p>
+    <div class="actions">
+      <button class="btn" id="edit" type="button">Edit my reply</button>
+      <a class="link" href="celebration.html">See the schedule →</a>
+    </div>
+  </div>
+
+  <a class="next" href="celebration.html"><span class="lbl">Back to</span><span class="to">The celebration →</span></a>
+</main>
+<div class="grain" aria-hidden="true"></div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stay &amp; travel · Lorena &amp; Youssef</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#12402A">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous" defer></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body class="stay">
+<a class="skip" href="#main">Skip to content</a>
+<div class="room" style="background-image:url(assets/img/blue-room.webp)" aria-hidden="true"></div>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Lorena &amp; Youssef — home">L&amp;Y</a>
+  <nav aria-label="Main"><ul class="nav">
+    <li><a href="celebration.html">Celebration</a></li>
+    <li><a href="stay.html" aria-current="page">Stay &amp; Travel</a></li>
+    <li><a href="details.html">Details</a></li>
+    <li><a href="rsvp.html">RSVP</a></li>
+  </ul></nav>
+</header>
+
+<main id="main" class="wrap">
+  <div class="center">
+    <h1 class="title">Where to stay</h1>
+    <p class="sub">A few places to make yourself at home.</p>
+    <p class="note">Booking links are pre-filled for Thursday 6 → Sunday 9 May 2027 — change the dates if you're staying longer.</p>
+  </div>
+
+  <div class="grid2 hotels">
+    <div class="hotel"><span class="num">01 · on the map</span><h2 class="item">Domaine des Remparts</h2><p class="eyebrow">Route de Fès</p><a class="link" href="https://domainedesremparts.com" target="_blank" rel="noopener">Visit hotel website ↗</a></div>
+    <div class="hotel"><span class="num">02 · on the map</span><h2 class="item">Les Deux Tours</h2><p class="eyebrow">Palmeraie</p><a class="link" href="https://www.booking.com/hotel/ma/les-deux-tours.html?checkin=2027-05-06&amp;checkout=2027-05-09&amp;group_adults=2&amp;no_rooms=1" target="_blank" rel="noopener">View on Booking.com ↗</a></div>
+    <div class="hotel"><span class="num">03 · on the map</span><h2 class="item">Les Palmiers Boutique Hôtel &amp; Spa</h2><p class="eyebrow">Palmeraie</p><a class="link" href="https://www.booking.com/hotel/ma/les-palmiers-marrakech.html?checkin=2027-05-06&amp;checkout=2027-05-09&amp;group_adults=2&amp;no_rooms=1" target="_blank" rel="noopener">View on Booking.com ↗</a></div>
+    <div class="hotel"><span class="num">04</span><h2 class="item">Havre de Paix</h2><p class="eyebrow">Marrakech</p><a class="link" href="https://www.booking.com/hotel/ma/havre-de-paix-marrakech2.html?checkin=2027-05-06&amp;checkout=2027-05-09&amp;group_adults=2&amp;no_rooms=1" target="_blank" rel="noopener">View on Booking.com ↗</a></div>
+    <div class="hotel"><span class="num">05</span><h2 class="item">Villa M</h2><p class="eyebrow">Near the golf</p><a class="link" href="https://www.booking.com/hotel/ma/villa-m-golf-a-proximite.html?checkin=2027-05-06&amp;checkout=2027-05-09&amp;group_adults=2&amp;no_rooms=1" target="_blank" rel="noopener">View on Booking.com ↗</a></div>
+    <div class="hotel"><span class="num">06</span><h2 class="item">Villa Eme</h2><p class="eyebrow">Amelkis golf · Heated pool</p><a class="link" href="https://www.booking.com/hotel/ma/villa-eme-amelkis-1-golf-course-heated-pool.html?checkin=2027-05-06&amp;checkout=2027-05-09&amp;group_adults=2&amp;no_rooms=1" target="_blank" rel="noopener">View on Booking.com ↗</a></div>
+  </div>
+
+  <div class="split"></div>
+
+  <section aria-labelledby="areas-h">
+    <div class="center">
+      <h2 class="title sm" id="areas-h">Where to base yourself</h2>
+      <p class="note it">Four neighbourhoods, each with its own feel. Distances are straight-line from Jnane Rumi — the drive is a little longer.</p>
+    </div>
+    <div id="staymap" role="region" aria-label="Map of Marrakech neighbourhoods, hotels and the venue"></div>
+    <div class="areas" id="areas"></div>
+  </section>
+
+  <div class="split"></div>
+
+  <div class="grid2">
+    <section id="travel" aria-labelledby="travel-h">
+      <h2 class="title sm" id="travel-h">Getting here</h2>
+      <p class="eyebrow">Marrakech Menara Airport · RAK</p>
+      <p class="body">The airport is on the south-west edge of the city. Expect roughly 25–35 minutes by car to the Palmeraie, depending on traffic.</p>
+      <p class="note">There are no wedding shuttles — taxis and ride-hailing apps run to the venue.</p>
+    </section>
+    <section id="venue" aria-labelledby="venue-h">
+      <h2 class="title sm" id="venue-h">Jnane Rumi</h2>
+      <p class="eyebrow">Rue Asasoussane, Mejjat 2<br>Nakhil Nord, Palmeraie, Marrakech</p>
+      <a class="link" href="https://www.google.com/maps/dir/?api=1&amp;destination=31.656891,-7.970057" target="_blank" rel="noopener">Directions in Google Maps ↗</a>
+      <a class="link" href="https://jnanerumi.com" target="_blank" rel="noopener">Venue website ↗</a>
+    </section>
+  </div>
+
+  <a class="next" href="details.html"><span class="lbl">Next</span><span class="to">Details →</span></a>
+</main>
+<div class="grain" aria-hidden="true"></div>
+</body>
+</html>
