@@ -33,9 +33,11 @@ Replies go straight into a Google Sheet you own. Nothing is stored on the websit
    ```
 6. Test: open the URL from step 4 in a browser — you should see `{"ok":true,"service":"rsvp"}`. Then send a test RSVP from the site and check the sheet.
 
-What you get in the sheet:
-- **RSVPs** tab — one row per guest (matched on name + email). If they send the form again, that row is updated and the *Updated* column is stamped.
+What's in the sheet:
+- **Guests** tab — *you* fill this in: `First | Last | Plus one`. Put **Yes** in *Plus one* for anyone who gets a guest. When they type their name on the RSVP form, a "Bringing your plus-one?" question appears just for them. Matching ignores capitals and accents (José = jose). The script re-checks the list on submit, so nobody else can add a plus-one by fiddling with the page.
+- **RSVPs** tab — one row per guest (matched on name + email). If they send the form again, that row is updated and the *Updated* column is stamped. *Plus-one* holds the guest's name, `No` if they declined, or is blank if they weren't offered one.
 - **Log** tab — every submission ever received, so nothing is lost.
+- **Summary** tab — live headcount per day, including plus-ones.
 - Guests get a plain-text copy of their reply by email (turn off with `SEND_CONFIRMATION = false`). Gmail allows ~100 of these a day on a free account; if you hit the limit the reply is still saved.
 
 If you change the script later, use **Deploy → Manage deployments → Edit → Version: New version** so the URL stays the same.

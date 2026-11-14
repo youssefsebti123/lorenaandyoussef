@@ -1,6 +1,14 @@
 /* Lorena & Youssef — shared styles */
 @view-transition{navigation:auto}
 
+/* fonts: self-hosted Cormorant Garamond + Jost (SIL OFL), latin + latin-ext */
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400 500;font-display:swap;src:url(fonts/cormorant-italic-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400 600;font-display:swap;src:url(fonts/cormorant-normal-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Jost';font-style:normal;font-weight:300 500;font-display:swap;src:url(fonts/jost-normal-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400 500;font-display:swap;src:url(fonts/cormorant-italic-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400 600;font-display:swap;src:url(fonts/cormorant-normal-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Jost';font-style:normal;font-weight:300 500;font-display:swap;src:url(fonts/jost-normal-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+
 :root{
   --serif:'Cormorant Garamond',Georgia,serif;
   --sans:'Jost',system-ui,sans-serif;
@@ -39,6 +47,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .room::after{content:"";position:absolute;inset:0;
   background:radial-gradient(ellipse 70% 85% at 50% 40%,rgba(28,15,5,.4),rgba(28,15,5,0) 70%),
              linear-gradient(to bottom,rgba(32,18,6,.7),rgba(32,18,6,.72) 40%,rgba(32,18,6,.86))}
+body.celebration .room{background-image:url(img/pool.webp);background-image:image-set(url(img/bg-pool.avif) type("image/avif"),url(img/pool.webp) type("image/webp"))}
+body.stay .room{background-image:url(img/blue-room.webp);background-image:image-set(url(img/bg-blue-room.avif) type("image/avif"),url(img/blue-room.webp) type("image/webp"))}
+body.details .room{background-image:url(img/dining.webp);background-image:image-set(url(img/bg-dining.avif) type("image/avif"),url(img/dining.webp) type("image/webp"))}
+body.rsvp .room{background-image:url(img/courtyard.webp);background-image:image-set(url(img/bg-courtyard.avif) type("image/avif"),url(img/courtyard.webp) type("image/webp"))}
 main{text-shadow:0 1px 2px rgba(20,10,3,.55),0 0 22px rgba(20,10,3,.45)}
 
 /* ───────── Header (every interior page) ───────── */
@@ -140,6 +152,7 @@ main{text-shadow:0 1px 2px rgba(20,10,3,.55),0 0 22px rgba(20,10,3,.45)}
 .resp{border:0;border-bottom:1px solid var(--line);padding:16px 0;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:center}
 .resp legend{float:left;width:100%;padding:0}
 .resp legend .item{display:block}
+.resp legend .note{display:block;font-family:var(--sans)}
 .resp .yn{display:flex;gap:22px}
 .resp .yn label{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:16px}
 .resp input{appearance:none;-webkit-appearance:none;width:22px;height:22px;border:1px solid currentColor;border-radius:50%;display:grid;place-content:center;cursor:pointer;margin:0}
@@ -165,7 +178,7 @@ main{text-shadow:0 1px 2px rgba(20,10,3,.55),0 0 22px rgba(20,10,3,.45)}
 
 /* ───────── Home ───────── */
 body.home{background:#E9D6B8;color:var(--dark);overflow:hidden;height:100vh;height:100dvh}
-.home .hero-bg{position:fixed;inset:0;background:url(img/hero.webp) center 40%/cover;filter:brightness(1.45) saturate(.3) contrast(.82) blur(1.5px);transform:scale(1.03)}
+.home .hero-bg{position:fixed;inset:0;background:url(img/hero.webp) center 40%/cover;background-image:url(img/hero.webp);background-image:image-set(url(img/bg-hero.avif) type("image/avif"),url(img/hero.webp) type("image/webp"));filter:brightness(1.45) saturate(.3) contrast(.82) blur(1.5px);transform:scale(1.03)}
 .home .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(246,235,212,.25),rgba(240,220,190,.35) 30%,rgba(232,205,170,.42) 55%,rgba(220,185,148,.55))}
 .home .veil{position:fixed;left:0;right:0;top:0;height:52vh;pointer-events:none;
   background:linear-gradient(to bottom,rgba(246,236,216,.62),rgba(246,236,216,.5) 55%,rgba(246,236,216,0));
@@ -181,6 +194,7 @@ body.home{background:#E9D6B8;color:var(--dark);overflow:hidden;height:100vh;heig
 .doors li{flex:1;max-width:240px;height:100%}
 .door{display:block;position:relative;height:100%;border-radius:50% 50% 0 0/28% 28% 0 0;overflow:hidden;box-shadow:0 4px 30px rgba(58,30,18,.25);transition:transform .5s,box-shadow .5s;text-decoration:none}
 .door:hover,.door:focus-visible{transform:translateY(-12px);box-shadow:0 8px 50px rgba(58,30,18,.4)}
+.door picture{display:block;height:100%}
 .door img{width:100%;height:100%;object-fit:cover}
 .door::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(42,24,8,.75),rgba(42,24,8,.15) 40%,transparent 65%)}
 .door span{position:absolute;z-index:1;left:0;right:0;bottom:24px;text-align:center;font-size:13.5px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:var(--ink);text-shadow:0 1px 6px rgba(0,0,0,.7)}

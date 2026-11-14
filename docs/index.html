@@ -13,11 +13,9 @@
 <meta property="og:url" content="https://lorenaandyoussef.com/">
 <meta property="og:image" content="https://lorenaandyoussef.com/assets/img/og.jpg">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/fonts/cormorant-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
-<link rel="preload" as="image" href="assets/img/hero.webp">
+<link rel="preload" href="assets/img/bg-hero.avif" as="image" type="image/avif">
 </head>
 <body class="home">
 <a class="skip" href="#doors">Skip to the menu</a>
@@ -34,10 +32,10 @@
 
 <nav aria-label="Main">
   <ul class="doors" id="doors">
-    <li><a class="door" href="celebration.html"><img src="assets/img/pool.webp" alt=""><span>Celebration</span></a></li>
-    <li><a class="door" href="stay.html"><img src="assets/img/blue-room.webp" alt=""><span>Stay &amp; Travel</span></a></li>
-    <li><a class="door" href="details.html"><img src="assets/img/dining.webp" alt=""><span>Details</span></a></li>
-    <li><a class="door" href="rsvp.html"><img src="assets/img/courtyard.webp" alt=""><span>RSVP</span></a></li>
+    <li><a class="door" href="celebration.html"><picture><source srcset="assets/img/door-pool.avif" type="image/avif"><img src="assets/img/pool.webp" alt="" width="480" height="720" decoding="async" fetchpriority="high"></picture><span>Celebration</span></a></li>
+    <li><a class="door" href="stay.html"><picture><source srcset="assets/img/door-blue-room.avif" type="image/avif"><img src="assets/img/blue-room.webp" alt="" width="480" height="720" decoding="async" fetchpriority="high"></picture><span>Stay &amp; Travel</span></a></li>
+    <li><a class="door" href="details.html"><picture><source srcset="assets/img/door-dining.avif" type="image/avif"><img src="assets/img/dining.webp" alt="" width="480" height="720" decoding="async" fetchpriority="high"></picture><span>Details</span></a></li>
+    <li><a class="door" href="rsvp.html"><picture><source srcset="assets/img/door-courtyard.avif" type="image/avif"><img src="assets/img/courtyard.webp" alt="" width="480" height="720" decoding="async" fetchpriority="high"></picture><span>RSVP</span></a></li>
   </ul>
 </nav>
 <div class="grain" aria-hidden="true"></div>

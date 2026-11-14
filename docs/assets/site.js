@@ -67,8 +67,20 @@
         map.flyTo(AREAS[i].c, 14, { duration: .8 }); circles[i].openPopup();
       }));
     };
-    // leaflet.js is deferred and loads before this script, but guard anyway
-    window.L ? init() : window.addEventListener('load', init);
+    // Load Leaflet (~150 KB) only when the map is about to scroll into view.
+    const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet';
+    const loadLeaflet = () => {
+      const css = document.createElement('link');
+      Object.assign(css, { rel: 'stylesheet', href: LEAFLET + '.css', integrity: 'sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H', crossOrigin: 'anonymous' });
+      const js = document.createElement('script');
+      Object.assign(js, { src: LEAFLET + '.js', integrity: 'sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH', crossOrigin: 'anonymous' });
+      js.onload = init; js.onerror = init; // init shows a message if L is missing
+      document.head.append(css, js);
+    };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); loadLeaflet(); } }, { rootMargin: '600px 0px' });
+      io.observe(mapEl);
+    } else loadLeaflet();
   }
 
   /* ───────── RSVP ───────── */
@@ -88,18 +100,45 @@
     const cap = s => s.replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
     const say = (t, ok) => { msg.textContent = t; msg.classList.toggle('ok', !!ok); };
 
+    const post = async body => {
+      // text/plain body = a "simple" request, so the browser skips the CORS preflight Apps Script can't answer
+      const res = await fetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+      return res.json();
+    };
+
+    /* Plus-one: only guests marked "Yes" in the sheet's Guests tab see this. The script re-checks on submit. */
+    const plusBox = $('#plusone'), plusName = $('#plusone-name');
+    let lookedUp = '';
+    const showPlusName = () => { plusName.hidden = !(form.querySelector('input[name=plusOne]:checked')?.value === 'Yes'); };
+    const lookup = async () => {
+      const first = tidy(form.elements.first.value), last = tidy(form.elements.last.value);
+      const key = (first + '|' + last).toLowerCase();
+      if (!endpoint || !first || !last || key === lookedUp) return;
+      lookedUp = key;
+      try {
+        const out = await post({ action: 'lookup', first, last });
+        if (key !== lookedUp) return; // name changed while we were asking
+        plusBox.hidden = !out.plusOne;
+      } catch { /* lookup is a nicety — the form still works without it */ }
+    };
+    ['first', 'last'].forEach(k => form.elements[k].addEventListener('change', lookup));
+    $$('input[name=plusOne]', form).forEach(el => el.addEventListener('change', showPlusName));
+
     const fill = r => {
-      ['first', 'last', 'email', 'party', 'dietary', 'thursdayNotes'].forEach(k => { form.elements[k].value = r[k] || ''; });
-      DAYS.forEach(([k]) => { const el = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (el) el.checked = true; });
+      ['first', 'last', 'email', 'party', 'dietary', 'thursdayNotes', 'plusOneName'].forEach(k => { form.elements[k].value = r[k] || ''; });
+      DAYS.concat([['plusOne']]).forEach(([k]) => { const el = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (el) el.checked = true; });
+      plusBox.hidden = !r.plusOne; showPlusName();
     };
     const showDone = (r, emailed) => {
       $('#thanks').textContent = 'Thank you, ' + r.first + '.';
       $('#done-sub').textContent = emailed ? 'Your reply has been saved — a copy is on its way to ' + r.email + '.' : 'Your reply has been saved.';
       const plans = $('#plans'); plans.replaceChildren();
-      DAYS.forEach(([k, label]) => {
+      const rows = DAYS.map(([k, label]) => [label, r[k]]);
+      if (r.plusOne) rows.push(['Plus-one', r.plusOne === 'Yes' ? r.plusOneName : 'Not bringing one']);
+      rows.forEach(([label, val]) => {
         const row = document.createElement('div'); row.className = 'row';
         const h = document.createElement('p'); h.className = 'item'; h.textContent = label;
-        const v = document.createElement('p'); v.className = 'note'; v.textContent = r[k];
+        const v = document.createElement('p'); v.className = 'note'; v.textContent = val;
         row.append(h, v); plans.append(row);
       });
       ask.hidden = true; done.hidden = false; scrollTo(0, 0); done.focus({ preventScroll: true });
@@ -108,7 +147,7 @@
     const saved = store.get();
     if (saved && saved.first) showDone(saved, false);
 
-    $('#edit').addEventListener('click', () => { fill(store.get() || {}); done.hidden = true; ask.hidden = false; say(''); $('#first').focus(); });
+    $('#edit').addEventListener('click', () => { const r = store.get() || {}; fill(r); lookedUp = ''; lookup(); done.hidden = true; ask.hidden = false; say(''); $('#first').focus(); });
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -125,16 +164,22 @@
       if (!r.last) return bad(f.last, 'Please enter your last name.');
       const missing = DAYS.find(([k]) => !r[k]);
       if (missing) return bad(form.querySelector(`input[name=${missing[0]}]`), 'Please answer yes or no for ' + missing[1].split(' ·')[0] + '.');
+      await lookup(); // in case they typed their name and hit send without leaving the field
+      if (!plusBox.hidden) {
+        r.plusOne = form.querySelector('input[name=plusOne]:checked')?.value || '';
+        r.plusOneName = r.plusOne === 'Yes' ? cap(tidy(f.plusOneName.value)) : '';
+        if (!r.plusOne) return bad(form.querySelector('input[name=plusOne]'), 'Please tell us whether you’re bringing your plus-one.');
+        if (r.plusOne === 'Yes' && !r.plusOneName) return bad(f.plusOneName, 'Please add your plus-one’s name.');
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) return bad(f.email, 'Please add a valid email address.');
       if (!endpoint) return say('RSVPs aren’t connected yet, so this reply can’t be sent. Please message us on WhatsApp instead.');
 
       send.disabled = true; send.textContent = 'Sending…'; say('');
       try {
-        // text/plain body = a "simple" request, so the browser skips the CORS preflight Apps Script can't answer
-        const res = await fetch(endpoint, { method: 'POST', body: JSON.stringify(r) });
-        const out = await res.json();
+        const out = await post(r);
         if (!out.ok) throw new Error(out.error || 'rejected');
         delete r.website;
+        if (!out.plusOneAllowed) { delete r.plusOne; delete r.plusOneName; } // the sheet is the source of truth
         store.set(r);
         showDone(r, !!out.emailed);
       } catch (err) {

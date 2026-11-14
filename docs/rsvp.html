@@ -7,16 +7,15 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#3A1510">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/fonts/cormorant-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/img/bg-courtyard.avif" as="image" type="image/avif">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/config.js" defer></script>
 <script src="assets/site.js" defer></script>
 </head>
 <body class="rsvp">
 <a class="skip" href="#main">Skip to content</a>
-<div class="room" style="background-image:url(assets/img/courtyard.webp)" aria-hidden="true"></div>
+<div class="room" aria-hidden="true"></div>
 <header class="topbar">
   <a class="brand" href="index.html" aria-label="Lorena &amp; Youssef — home">L&amp;Y</a>
   <nav aria-label="Main"><ul class="nav">
@@ -50,6 +49,12 @@
         <div class="yn"><label><input type="radio" name="friday" value="Attending" required> Yes</label><label><input type="radio" name="friday" value="Not attending"> No</label></div></fieldset>
       <fieldset class="resp"><legend><span class="item">Saturday 8 · The wedding</span><span class="note">Ceremony at 4 pm</span></legend>
         <div class="yn"><label><input type="radio" name="saturday" value="Attending" required> Yes</label><label><input type="radio" name="saturday" value="Not attending"> No</label></div></fieldset>
+
+      <div id="plusone" hidden>
+        <fieldset class="resp"><legend><span class="item">Bringing your plus-one?</span><span class="note">Your invitation includes a guest — they’ll join you on the days you said yes to.</span></legend>
+          <div class="yn"><label><input type="radio" name="plusOne" value="Yes"> Yes</label><label><input type="radio" name="plusOne" value="No"> No</label></div></fieldset>
+        <div class="field" id="plusone-name" hidden style="margin-top:18px"><label for="plusOneName">Your plus-one’s full name</label><input id="plusOneName" name="plusOneName" autocomplete="off" maxlength="160"></div>
+      </div>
 
       <div class="field" style="margin-top:22px"><label for="email">Email</label><span class="hint" id="email-hint">We’ll send a copy of your reply here.</span><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required aria-describedby="email-hint"></div>
       <div class="field"><label for="party">Also replying for (optional)</label><span class="hint" id="party-hint">Names of anyone else on your invitation, with the same answers as you.</span><input id="party" name="party" maxlength="300" aria-describedby="party-hint"></div>
