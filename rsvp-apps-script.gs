@@ -89,6 +89,60 @@ function doPost(e) {
 // Visiting the /exec URL in a browser shows this — handy to check the deployment is live.
 function doGet() { return reply({ ok: true, service: 'rsvp' }); }
 
+// Run once from the editor (pick "setup" next to ▷ Run). Builds the Summary, Guests, RSVPs and Log tabs.
+// Safe to run again: it never overwrites a tab that already has content.
+function setup() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const style = (sh, cols) => {
+    sh.getRange(1, 1, 1, cols).setFontWeight('bold').setBackground('#f3e9dc');
+    sh.setFrozenRows(1);
+  };
+
+  const guests = ss.getSheetByName('Guests') || ss.insertSheet('Guests');
+  if (guests.getLastRow() === 0) {
+    guests.getRange(1, 1, 1, 4).setValues([['First', 'Last', 'Plus one', 'Notes']]);
+    style(guests, 4);
+    guests.getRange('C2:C1000').setDataValidation(
+      SpreadsheetApp.newDataValidation().requireValueInList(['Yes', 'No'], true).setAllowInvalid(false).build());
+    guests.setColumnWidths(1, 2, 140).setColumnWidth(3, 90).setColumnWidth(4, 260);
+  }
+  ['RSVPs', 'Log'].forEach(name => {
+    const sh = sheet(ss, name);
+    style(sh, HEAD.length);
+    sh.setColumnWidths(1, 2, 150).setColumnWidths(3, 2, 120).setColumnWidth(5, 200).setColumnWidths(6, 3, 110)
+      .setColumnWidths(9, 2, 180).setColumnWidths(11, 2, 240);
+  });
+
+  let sum = ss.getSheetByName('Summary');
+  if (!sum) {
+    const first = ss.getSheets()[0];
+    sum = first.getLastRow() === 0 && !/^(Guests|RSVPs|Log)$/.test(first.getName()) ? first.setName('Summary') : ss.insertSheet('Summary');
+  }
+  if (sum.getLastRow() === 0) {
+    sum.getRange('A1').setValue('Headcount').setFontWeight('bold').setFontSize(14);
+    sum.getRange('A3:E3').setValues([['Day', 'Guests attending', 'Plus-ones attending', 'Total attending', 'Not attending']])
+      .setFontWeight('bold').setBackground('#f3e9dc');
+    [['Thursday 6 May', 'F'], ['Friday 7 May', 'G'], ['Saturday 8 May', 'H']].forEach(([day, c], i) => {
+      const r = 4 + i, col = 'RSVPs!' + c + '2:' + c;
+      sum.getRange('A' + r).setNumberFormat('@').setValue(day);
+      sum.getRange('B' + r + ':E' + r).setFormulas([[
+        '=COUNTIF(' + col + ',"Attending")',
+        '=COUNTIFS(' + col + ',"Attending",RSVPs!I2:I,"<>",RSVPs!I2:I,"<>No")',
+        '=B' + r + '+C' + r,
+        '=COUNTIF(' + col + ',"Not attending")']]);
+    });
+    sum.getRange('A8:B10').setFormulas([
+      ['Replies received', '=COUNTA(RSVPs!C2:C)'],
+      ['Guests on the list', '=COUNTA(Guests!A2:A)'],
+      ['Plus-ones offered', '=COUNTIF(Guests!C2:C,"Yes")']]);
+    sum.getRange('A8:A10').setFontWeight('bold');
+    sum.getRange('A12').setValue('Names in "Also replying for" are free text and aren\'t counted above.').setFontStyle('italic');
+    sum.setColumnWidth(1, 170).setColumnWidths(2, 4, 150);
+  }
+  ss.setActiveSheet(sum);
+  ss.moveActiveSheet(1);
+}
+
 // Case-, accent- and spacing-insensitive match against the Guests tab.
 function hasPlusOne(first, last) {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Guests');
