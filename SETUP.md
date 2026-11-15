@@ -36,7 +36,7 @@ What's in the sheet:
 
 If you change the script later, use **Deploy → Manage deployments → Edit → Version: New version** so the URL stays the same.
 
-Until step 5 is done, the RSVP page shows a banner saying replies can't be sent — so you can't accidentally publish a form that silently drops answers.
+If `config.js` ever has no URL, the RSVP page shows a banner saying replies can't be sent — so you can't accidentally publish a form that silently drops answers.
 
 ---
 
