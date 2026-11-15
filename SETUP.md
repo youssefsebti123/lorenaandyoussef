@@ -16,22 +16,16 @@ rsvp-apps-script.gs  ← paste into Google Apps Script (step 1)
 
 ---
 
-## 1. Connect RSVPs to Google Sheets (10 minutes)
+## 1. RSVPs → Google Sheets (live since 14 Nov 2026)
 
-Replies go straight into a Google Sheet you own. Nothing is stored on the website itself.
+Replies go straight into a Google Sheet in **youssefsebti123@gmail.com**'s Drive. Nothing is stored on the website itself.
 
-1. Open the sheet: [Lorena & Youssef RSVPs](https://docs.google.com/spreadsheets/d/15oD-VwML5bh8gI1vzdWTgQPuL9c1Pfb2T51_dQW86GM/edit) (already has the Summary, Guests, RSVPs and Log tabs).
-2. **Extensions → Apps Script**. Delete the sample code, paste all of `rsvp-apps-script.gs`, click **Save**.
-   - Optional: set `NOTIFY_EMAIL` at the top to your address to get an email for every reply.
-3. **Deploy → New deployment →** gear icon **→ Web app**
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-4. Click **Deploy**, approve the Google permissions (it needs the sheet + sending email as you), and copy the **Web app URL** (ends in `/exec`).
-5. Open `docs/assets/config.js` and paste it between the quotes:
-   ```js
-   window.RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfy…/exec';
-   ```
-6. Test: open the URL from step 4 in a browser — you should see `{"ok":true,"service":"rsvp"}`. Then send a test RSVP from the site and check the sheet.
+- **Sheet:** [Lorena & Youssef RSVPs](https://docs.google.com/spreadsheets/d/1sC2XYuuZ4qbiuzuLSNZ0JvxlV7AyLdRl4K7QElYKgJM/edit)
+- **Script:** in the sheet, **Extensions → Apps Script** ("RSVP receiver"), a copy of `rsvp-apps-script.gs`.
+- **Web app:** deployed as *Execute as: Me · Who has access: Anyone*. Its `/exec` URL is in `docs/assets/config.js`. Opening it in a browser shows `{"ok":true,"service":"rsvp"}`.
+- Optional: set `NOTIFY_EMAIL` at the top of the script to your address to get an email for every reply (then redeploy, see below).
+
+**Starting over in another sheet:** Extensions → Apps Script, paste `rsvp-apps-script.gs`, choose `setup` next to ▷ Run and click Run (approve Google's prompt: Advanced → Go to … → Allow). That builds the tabs. Then Deploy → New deployment → Web app (Me / Anyone), and put the new `/exec` URL in `docs/assets/config.js`.
 
 What's in the sheet:
 - **Guests** tab — *you* fill this in: `First | Last | Plus one`. Put **Yes** in *Plus one* for anyone who gets a guest. When they type their name on the RSVP form, a "Bringing your plus-one?" question appears just for them. Matching ignores capitals and accents (José = jose). The script re-checks the list on submit, so nobody else can add a plus-one by fiddling with the page.

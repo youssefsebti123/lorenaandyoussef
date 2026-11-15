@@ -131,10 +131,8 @@ function setup() {
         '=B' + r + '+C' + r,
         '=COUNTIF(' + col + ',"Not attending")']]);
     });
-    sum.getRange('A8:B10').setFormulas([
-      ['Replies received', '=COUNTA(RSVPs!C2:C)'],
-      ['Guests on the list', '=COUNTA(Guests!A2:A)'],
-      ['Plus-ones offered', '=COUNTIF(Guests!C2:C,"Yes")']]);
+    sum.getRange('A8:A10').setValues([['Replies received'], ['Guests on the list'], ['Plus-ones offered']]);
+    sum.getRange('B8:B10').setFormulas([['=COUNTA(RSVPs!C2:C)'], ['=COUNTA(Guests!A2:A)'], ['=COUNTIF(Guests!C2:C,"Yes")']]);
     sum.getRange('A8:A10').setFontWeight('bold');
     sum.getRange('A12').setValue('Names in "Also replying for" are free text and aren\'t counted above.').setFontStyle('italic');
     sum.setColumnWidth(1, 170).setColumnWidths(2, 4, 150);
