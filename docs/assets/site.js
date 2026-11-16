@@ -101,7 +101,7 @@
     const cap = s => s.replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
     const say = (t, ok) => { msg.textContent = t; msg.classList.toggle('ok', !!ok); };
 
-    // The database exposes three functions: search_guests, guest_extras, submit_rsvp (supabase/schema.sql).
+    // Database functions the form uses: search_guests, guest_invite, submit_rsvp (supabase/schema.sql).
     const rpc = async (fn, args) => {
       const res = await fetch(endpoint + '/rest/v1/rpc/' + fn, {
         method: 'POST', headers: { apikey: api.key, 'Content-Type': 'application/json' }, body: JSON.stringify(args) });
@@ -110,7 +110,7 @@
     };
     const post = body =>
       body.action === 'search' ? rpc('search_guests', { q: body.q }) :
-      body.action === 'lookup' ? rpc('guest_extras', { first: body.first, last: body.last }).then(n => ({ extras: n })) :
+      body.action === 'lookup' ? rpc('guest_invite', { first: body.first, last: body.last }) :
       rpc('submit_rsvp', { r: body });
 
     const el = (tag, props, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
@@ -143,6 +143,19 @@
     };
     extrasOpts.addEventListener('change', renderNames);
 
+    /* Who's coming with you: the other named people on the same invitation (from the guests table's party). */
+    const partyBox = $('#party-box'), partyList = $('#party-list'), partyField = $('#party-field');
+    let members = [];
+    const nameKey = m => (m.first + ' ' + m.last).toLowerCase();
+    const ticked = () => $$('input:checked', partyList).map(i => members[+i.value]);
+    const setMembers = (list, tick = []) => {
+      members = list || [];
+      partyBox.hidden = !members.length;
+      partyField.hidden = !!members.length; // the tick boxes replace the free-text "Also replying for"
+      partyList.replaceChildren(...members.map((m, i) => el('label', {},
+        el('input', { type: 'checkbox', value: i, checked: tick.includes(nameKey(m)) }), ' ' + m.first + ' ' + m.last)));
+    };
+
     const lookup = async () => {
       const first = tidy(form.elements.first.value), last = tidy(form.elements.last.value);
       const key = (first + '|' + last).toLowerCase();
@@ -151,12 +164,16 @@
       try {
         const out = await post({ action: 'lookup', first, last });
         if (key !== lookedUp) return; // name changed while we were asking
-        const n = out.extras != null ? out.extras : (out.plusOne ? 1 : 0);
+        const n = out.extras || 0;
         if (n !== allowed) setAllowed(n, chosen());
+        setMembers(out.members, ticked().map(nameKey));
       } catch { /* lookup is a nicety — the form still works without it */ }
     };
     // A different name means a different invitation: drop the previous person's guest answers.
-    const forget = () => { typed.length = 0; extrasNames.replaceChildren(); $$('input', extrasOpts).forEach(i => { i.checked = false; }); };
+    const forget = () => {
+      typed.length = 0; extrasNames.replaceChildren(); $$('input', extrasOpts).forEach(i => { i.checked = false; });
+      setMembers([]);
+    };
     ['first', 'last'].forEach(k => form.elements[k].addEventListener('change', () => { forget(); lookup(); }));
 
     /* Find your name: suggestions from the Guests tab once 3+ letters are typed. */
@@ -198,12 +215,14 @@
       DAYS.forEach(([k]) => { const c = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (c) c.checked = true; });
       typed.length = 0; (r.guestNames || []).forEach((n, i) => { typed[i] = n; });
       extrasNames.replaceChildren(); setAllowed(r.extrasAllowed || 0, r.extras != null ? r.extras : null);
+      setMembers(r.members, (r.companions || []).map(nameKey));
     };
     const showDone = (r, emailed) => {
       $('#thanks').textContent = 'Thank you, ' + r.first + '.';
       $('#done-sub').textContent = emailed ? 'Your reply has been saved — a copy is on its way to ' + r.email + '.' : 'Your reply has been saved.';
       const plans = $('#plans'); plans.replaceChildren();
       const rows = DAYS.map(([k, label]) => [label, r[k]]);
+      if (r.companionNames && r.companionNames.length) rows.push(['Coming with you', r.companionNames.join(', ')]);
       if (r.extrasAllowed === 1) rows.push(['Plus-one', r.extras ? r.guestNames[0] : 'Not bringing one']);
       else if (r.extrasAllowed) rows.push(['Guests with you', r.extras ? r.guestNames.join(', ') : 'None']);
       rows.forEach(([label, val]) => {
@@ -244,6 +263,7 @@
         if (empty) return bad(empty, allowed === 1 ? 'Please add your plus-one’s name.' : 'Please add a name for each guest.');
         r.guestNames = inputs.map(i => cap(tidy(i.value)));
       }
+      if (members.length) { r.companions = ticked(); r.party = ''; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) return bad(f.email, 'Please add a valid email address.');
       if (!endpoint) return say('RSVPs aren’t connected yet, so this reply can’t be sent. Please message us on WhatsApp instead.');
 
@@ -252,8 +272,9 @@
         const out = await post(r);
         if (!out.ok) throw new Error(out.error || 'rejected');
         delete r.website;
-        r.extrasAllowed = out.extrasAllowed || 0; // the sheet is the source of truth
+        r.extrasAllowed = out.extrasAllowed || 0; // the database is the source of truth
         if (!r.extrasAllowed) { delete r.extras; delete r.guestNames; }
+        r.members = members; r.companionNames = out.companions || [];
         store.set(r);
         showDone(r, !!out.emailed);
       } catch (err) {
