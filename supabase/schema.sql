@@ -183,7 +183,12 @@ declare
   v_extras int;
   v_names text[] := '{}';
   companion_ids bigint[] := '{}';
-  companion_names text[] := '{}';
+  companions_out jsonb := '[]';
+  rec record;
+  c_coming boolean;
+  c_thu text;
+  c_fri text;
+  c_sat text;
   existing_id bigint;
   key text;
   summary text;
@@ -212,23 +217,6 @@ begin
     end if;
   end if;
 
-  -- People ticked under "Who's coming with you?": only those really on this person's invitation.
-  if me.id is not null and me.party is not null and json_typeof(r->'companions') = 'array' then
-    select coalesce(array_agg(distinct g.id), '{}') into companion_ids
-    from (select c from json_array_elements(r->'companions') with ordinality t(c, i) where i <= 20) e
-    join public.guests g on g.party = me.party and g.id <> me.id
-     and public.norm(g.first || ' ' || g.last) =
-         public.norm(public.tidy(case when json_typeof(e.c) = 'object' then e.c->>'first' end, 80) || ' ' ||
-                     public.tidy(case when json_typeof(e.c) = 'object' then e.c->>'last' end, 80));
-    select coalesce(array_agg(g.first || ' ' || g.last order by g.id), '{}') into companion_names
-    from public.guests g where g.id = any(companion_ids);
-  end if;
-
-  insert into public.log (guest_id, first, last, email, thursday, friday, saturday, extra_guests, guest_names,
-                          also_replying_for, dietary, thursday_notes, companions)
-  values (me.id, v_first, v_last, v_email, v_thu, v_fri, v_sat, v_extras, array_to_string(v_names, ', '),
-          v_party, v_diet, v_notes, array_to_string(companion_names, ', '));
-
   -- This person's own row.
   if me.id is not null then
     select id into existing_id from public.rsvps where guest_id = me.id;
@@ -252,19 +240,49 @@ begin
             v_extras, array_to_string(v_names, ', '), v_party, v_diet, v_notes);
   end if;
 
-  -- Companions: drop anyone this person ticked before but not now (unless they've since replied themselves),
-  -- then save everyone ticked with the same answers.
+  -- The other people on this invitation, answered by this person: {first, last, coming, thursday, friday, saturday}.
+  -- Only people really on the same invitation are kept. "coming": false = not attending any day; day answers
+  -- that aren't valid fall back to this person's own answer.
+  if me.id is not null and me.party is not null and json_typeof(r->'companions') = 'array' then
+    for rec in
+      select distinct on (g.id) g.id, g.first, g.last, e.c
+      from (select t.c from json_array_elements(r->'companions') with ordinality t(c, i)
+            where t.i <= 20 and json_typeof(t.c) = 'object') e
+      join public.guests g on g.party = me.party and g.id <> me.id
+       and public.norm(g.first || ' ' || g.last) =
+           public.norm(public.tidy(e.c->>'first', 80) || ' ' || public.tidy(e.c->>'last', 80))
+      order by g.id
+    loop
+      c_coming := coalesce(lower(rec.c->>'coming') not in ('false', 'no'), true);
+      c_thu := case when not c_coming then 'Not attending'
+                    when rec.c->>'thursday' in ('Attending', 'Not attending') then rec.c->>'thursday' else v_thu end;
+      c_fri := case when not c_coming then 'Not attending'
+                    when rec.c->>'friday' in ('Attending', 'Not attending') then rec.c->>'friday' else v_fri end;
+      c_sat := case when not c_coming then 'Not attending'
+                    when rec.c->>'saturday' in ('Attending', 'Not attending') then rec.c->>'saturday' else v_sat end;
+
+      insert into public.rsvps (guest_id, replied_by, added_by, first, last, email, thursday, friday, saturday)
+      values (rec.id, me.id, me.first || ' ' || me.last, rec.first, rec.last, v_email, c_thu, c_fri, c_sat)
+      on conflict (guest_id) where guest_id is not null do update set
+        updated_at = now(), replied_by = excluded.replied_by, added_by = excluded.added_by, email = excluded.email,
+        thursday = excluded.thursday, friday = excluded.friday, saturday = excluded.saturday;
+
+      companion_ids := companion_ids || rec.id;
+      companions_out := companions_out || jsonb_build_array(jsonb_build_object(
+        'name', rec.first || ' ' || rec.last, 'thursday', c_thu, 'friday', c_fri, 'saturday', c_sat));
+    end loop;
+  end if;
+
+  -- Drop anyone this person answered for before but not now (unless they've since replied themselves).
   if me.id is not null then
     delete from public.rsvps
     where replied_by = me.id and guest_id <> me.id and not (guest_id = any(companion_ids));
-
-    insert into public.rsvps (guest_id, replied_by, added_by, first, last, email, thursday, friday, saturday)
-    select g.id, me.id, me.first || ' ' || me.last, g.first, g.last, v_email, v_thu, v_fri, v_sat
-    from public.guests g where g.id = any(companion_ids)
-    on conflict (guest_id) where guest_id is not null do update set
-      updated_at = now(), replied_by = excluded.replied_by, added_by = excluded.added_by, email = excluded.email,
-      thursday = excluded.thursday, friday = excluded.friday, saturday = excluded.saturday;
   end if;
+
+  insert into public.log (guest_id, first, last, email, thursday, friday, saturday, extra_guests, guest_names,
+                          also_replying_for, dietary, thursday_notes, companions)
+  values (me.id, v_first, v_last, v_email, v_thu, v_fri, v_sat, v_extras, array_to_string(v_names, ', '),
+          v_party, v_diet, v_notes, case when companions_out = '[]' then '' else companions_out::text end);
 
   -- Confirmation email via Resend (only if a key is stored in Vault as "resend_api_key"). Sent in the background.
   select decrypted_secret into key from vault.decrypted_secrets where name = 'resend_api_key' limit 1;
@@ -272,9 +290,12 @@ begin
     summary := 'Thursday 6 May · Marrakech day: ' || v_thu || E'\n' ||
                'Friday 7 May · Welcome drinks: '   || v_fri || E'\n' ||
                'Saturday 8 May · The wedding: '    || v_sat;
-    if cardinality(companion_names) > 0 then
-      summary := summary || E'\nComing with you: ' || array_to_string(companion_names, ', ');
-    end if;
+    for rec in select value as c from jsonb_array_elements(companions_out) loop
+      summary := summary || E'\n' || (rec.c->>'name') || ': ' ||
+        case when rec.c->>'thursday' = 'Not attending' and rec.c->>'friday' = 'Not attending'
+                  and rec.c->>'saturday' = 'Not attending' then 'not coming'
+             else 'Thu ' || (rec.c->>'thursday') || ' · Fri ' || (rec.c->>'friday') || ' · Sat ' || (rec.c->>'saturday') end;
+    end loop;
     if allowed = 1 then
       summary := summary || E'\nPlus-one: ' || case when v_extras > 0 then coalesce(v_names[1], '1') else 'not bringing one' end;
     elsif allowed > 1 then
@@ -294,7 +315,7 @@ begin
     emailed := true;
   end if;
 
-  return json_build_object('ok', true, 'emailed', emailed, 'extrasAllowed', allowed, 'companions', to_json(companion_names));
+  return json_build_object('ok', true, 'emailed', emailed, 'extrasAllowed', allowed, 'companions', companions_out);
 end $$;
 
 revoke execute on function public.search_guests(text), public.guest_extras(text, text), public.guest_invite(text, text),
