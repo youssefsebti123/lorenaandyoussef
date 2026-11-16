@@ -170,8 +170,8 @@
       clearTimeout(timer);
       const q = tidy(find.value), my = ++seq;
       if (!endpoint || q.replace(/\s/g, '').length < 3) return showPicks([]);
+      showPicks([], 'Searching…');
       timer = setTimeout(async () => {
-        showPicks([], 'Searching…');
         try {
           const out = await post({ action: 'search', q });
           if (my !== seq) return; // they kept typing
@@ -181,6 +181,8 @@
         } catch { if (my === seq) showPicks([], 'Search isn’t working right now — just type your name below.'); }
       }, 300);
     });
+    // Google's script can take several seconds to wake up; nudge it now so the first search is quick.
+    if (endpoint) post({ action: 'search', q: '' }).catch(() => {});
     find.addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); picks.querySelector('button')?.click(); } // don't submit the form
       if (e.key === 'Escape') showPicks([]);
