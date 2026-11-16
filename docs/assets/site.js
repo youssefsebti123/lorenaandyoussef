@@ -176,8 +176,9 @@
           const out = await post({ action: 'search', q });
           if (my !== seq) return; // they kept typing
           const m = out.matches || [];
-          showPicks(m, m.length ? '' : 'No match — just type your name below.');
-        } catch { if (my === seq) showPicks([]); }
+          showPicks(m, out.more ? 'More names match — keep typing to narrow it down.'
+            : m.length ? '' : 'No match — just type your name below.');
+        } catch { if (my === seq) showPicks([], 'Search isn’t working right now — just type your name below.'); }
       }, 300);
     });
     find.addEventListener('keydown', e => {
