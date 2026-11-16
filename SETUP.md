@@ -28,10 +28,12 @@ Replies go straight into a Google Sheet in **youssefsebti123@gmail.com**'s Drive
 **Starting over in another sheet:** Extensions → Apps Script, paste `rsvp-apps-script.gs`, choose `setup` next to ▷ Run and click Run (approve Google's prompt: Advanced → Go to … → Allow). That builds the tabs. Then Deploy → New deployment → Web app (Me / Anyone), and put the new `/exec` URL in `docs/assets/config.js`.
 
 What's in the sheet:
-- **Guests** tab — *you* fill this in: `First | Last | Plus one`. Put **Yes** in *Plus one* for anyone who gets a guest. When they type their name on the RSVP form, a "Bringing your plus-one?" question appears just for them. Matching ignores capitals and accents (José = jose). The script re-checks the list on submit, so nobody else can add a plus-one by fiddling with the page.
-- **RSVPs** tab — one row per guest (matched on name + email). If they send the form again, that row is updated and the *Updated* column is stamped. *Plus-one* holds the guest's name, `No` if they declined, or is blank if they weren't offered one.
+- **Guests** tab — the invite list (imported from Joy on 16 Nov 2026): `First | Last | Plus ones | Notes`.
+  - *Plus ones*: **Yes** = one extra guest, a **number** (2, 3…) = up to that many, **No**/blank = none. Those guests get "Bringing your plus-one?" or "How many guests are you bringing?" on the form, plus a name box per guest. The script re-checks this on submit, so nobody can add guests by fiddling with the page.
+  - The form's **Find your name** box searches this tab once 3+ letters are typed (any part of the first or last name, ignoring capitals and accents) and shows up to 6 names. Picking one fills in the name exactly as listed. Trade-off: anyone with the link can look up guest names this way — the same as Joy's "find your invitation".
+- **RSVPs** tab — one row per guest (matched on name + email). If they send the form again, that row is updated and the *Updated* column is stamped. *Extra guests* is how many they're bringing (blank if they weren't offered any); *Guest names* lists them.
 - **Log** tab — every submission ever received, so nothing is lost.
-- **Summary** tab — live headcount per day, including plus-ones.
+- **Summary** tab — live headcount per day, including extra guests. Running `setup` again rebuilds this tab.
 - Guests get a plain-text copy of their reply by email (turn off with `SEND_CONFIRMATION = false`). Gmail allows ~100 of these a day on a free account; if you hit the limit the reply is still saved.
 
 If you change the script later, use **Deploy → Manage deployments → Edit → Version: New version** so the URL stays the same.
