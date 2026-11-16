@@ -143,18 +143,69 @@
     };
     extrasOpts.addEventListener('change', renderNames);
 
-    /* Who's coming with you: the other named people on the same invitation (from the guests table's party). */
-    const partyBox = $('#party-box'), partyList = $('#party-list'), partyField = $('#party-field');
-    let members = [];
+    /* Your invitation: the other named people on the same invitation (guests.party in the database).
+       Each gets "Coming? Yes / No" right after the name. Their days copy yours until "Change …'s days". */
+    const partyBox = $('#party-box'), partyIntro = $('#party-intro'), partyList = $('#party-list');
+    const othersBox = $('#others-box'), othersList = $('#others-list'), myDaysH = $('#my-days-h'), partyField = $('#party-field');
+    const DAY_NAMES = { thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday' };
+    let members = []; // [{ first, last, coming: true | false | null, custom: bool, days: { thursday, friday, saturday } }]
     const nameKey = m => (m.first + ' ' + m.last).toLowerCase();
-    const ticked = () => $$('input:checked', partyList).map(i => members[+i.value]);
-    const setMembers = (list, tick = []) => {
-      members = list || [];
-      partyBox.hidden = !members.length;
-      partyField.hidden = !!members.length; // the tick boxes replace the free-text "Also replying for"
-      partyList.replaceChildren(...members.map((m, i) => el('label', {},
-        el('input', { type: 'checkbox', value: i, checked: tick.includes(nameKey(m)) }), ' ' + m.first + ' ' + m.last)));
+    const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+    const mine = k => form.querySelector(`input[name=${k}]:checked`)?.value || '';
+    const daysOf = m => Object.fromEntries(DAYS.map(([k]) => [k, m.custom ? m.days[k] || '' : mine(k)]));
+    const yn = (name, opts, value, onPick) => el('div', { className: 'yn' }, ...opts.map(([v, t]) =>
+      el('label', {}, el('input', { type: 'radio', name, value: v, checked: value === v, onchange: () => onPick(v) }), ' ' + t)));
+
+    const sameAsYou = () => {
+      if (DAYS.some(([k]) => !mine(k))) return 'Same days as you.';
+      const yes = DAYS.filter(([k]) => mine(k) === 'Attending').map(([k]) => DAY_NAMES[k]);
+      return yes.length ? 'Same as you: ' + andList(yes) + '.' : 'Same as you: not coming any day.';
     };
+    const renderOthers = () => {
+      const coming = members.filter(m => m.coming);
+      othersBox.hidden = !coming.length;
+      othersList.replaceChildren(...coming.map(m => {
+        const i = members.indexOf(m);
+        const fs = el('fieldset', { className: 'resp stack other' },
+          el('legend', {}, el('span', { className: 'item', textContent: m.first + ' ' + m.last }),
+            el('span', { className: 'note', textContent: m.custom ? 'Their own days:' : sameAsYou() })));
+        if (m.custom) {
+          DAYS.forEach(([k, label]) => fs.append(el('div', { className: 'mday' }, el('span', { textContent: label.split(' ·')[0] }),
+            yn('m' + i + k, [['Attending', 'Yes'], ['Not attending', 'No']], m.days[k], v => { m.days[k] = v; }))));
+          fs.append(el('button', { type: 'button', className: 'change', textContent: 'Same days as me',
+            onclick: () => { m.custom = false; m.days = {}; renderOthers(); } }));
+        } else {
+          fs.append(el('button', { type: 'button', className: 'change', textContent: 'Change ' + m.first + '’s days',
+            onclick: () => {
+              m.days = Object.fromEntries(DAYS.map(([k]) => [k, mine(k)])); m.custom = true; renderOthers();
+              othersList.querySelector(`input[name="m${i}thursday"]`)?.focus();
+            } }));
+        }
+        return fs;
+      }));
+    };
+    const renderParty = () => {
+      const any = members.length > 0;
+      partyBox.hidden = myDaysH.hidden = !any;
+      partyField.hidden = any; // these questions replace the free-text "Also replying for"
+      partyIntro.textContent = any ? andList(members.map(m => m.first)) + (members.length > 1 ? ' are' : ' is') +
+        ' on your invitation too — let us know who’s coming.' : '';
+      partyList.replaceChildren(...members.map((m, i) => el('fieldset', { className: 'resp' },
+        el('legend', {}, el('span', { className: 'item', textContent: m.first + ' ' + m.last }),
+          el('span', { className: 'note', textContent: 'Coming?' })),
+        yn('m' + i, [['yes', 'Yes'], ['no', 'No']], m.coming == null ? null : m.coming ? 'yes' : 'no',
+          v => { m.coming = v === 'yes'; renderOthers(); }))));
+      renderOthers();
+    };
+    // found = names from the database; prev = earlier answers to keep (same names)
+    const setMembers = (found, prev = []) => {
+      members = (found || []).map(f => {
+        const p = prev.find(x => nameKey(x) === nameKey(f));
+        return { first: f.first, last: f.last, coming: p ? p.coming : null, custom: !!(p && p.custom), days: p && p.custom ? { ...p.days } : {} };
+      });
+      renderParty();
+    };
+    DAYS.forEach(([k]) => $$(`input[name=${k}]`, form).forEach(i => i.addEventListener('change', renderOthers)));
 
     const lookup = async () => {
       const first = tidy(form.elements.first.value), last = tidy(form.elements.last.value);
@@ -166,13 +217,13 @@
         if (key !== lookedUp) return; // name changed while we were asking
         const n = out.extras || 0;
         if (n !== allowed) setAllowed(n, chosen());
-        setMembers(out.members, ticked().map(nameKey));
+        setMembers(out.members, members);
       } catch { /* lookup is a nicety — the form still works without it */ }
     };
     // A different name means a different invitation: drop the previous person's guest answers.
     const forget = () => {
       typed.length = 0; extrasNames.replaceChildren(); $$('input', extrasOpts).forEach(i => { i.checked = false; });
-      setMembers([]);
+      setMembers([]); lookedUp = ''; // so the next lookup always reloads the invitation, even for the same name
     };
     ['first', 'last'].forEach(k => form.elements[k].addEventListener('change', () => { forget(); lookup(); }));
 
@@ -215,14 +266,17 @@
       DAYS.forEach(([k]) => { const c = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (c) c.checked = true; });
       typed.length = 0; (r.guestNames || []).forEach((n, i) => { typed[i] = n; });
       extrasNames.replaceChildren(); setAllowed(r.extrasAllowed || 0, r.extras != null ? r.extras : null);
-      setMembers(r.members, (r.companions || []).map(nameKey));
+      setMembers(r.members, r.memberState || []);
     };
     const showDone = (r, emailed) => {
       $('#thanks').textContent = 'Thank you, ' + r.first + '.';
       $('#done-sub').textContent = emailed ? 'Your reply has been saved — a copy is on its way to ' + r.email + '.' : 'Your reply has been saved.';
       const plans = $('#plans'); plans.replaceChildren();
       const rows = DAYS.map(([k, label]) => [label, r[k]]);
-      if (r.companionNames && r.companionNames.length) rows.push(['Coming with you', r.companionNames.join(', ')]);
+      (r.companionResults || []).forEach(c => {
+        const yes = DAYS.filter(([k]) => c[k] === 'Attending').map(([k]) => DAY_NAMES[k]);
+        rows.push([c.name, yes.length ? andList(yes) : 'Not coming']);
+      });
       if (r.extrasAllowed === 1) rows.push(['Plus-one', r.extras ? r.guestNames[0] : 'Not bringing one']);
       else if (r.extrasAllowed) rows.push(['Guests with you', r.extras ? r.guestNames.join(', ') : 'None']);
       rows.forEach(([label, val]) => {
@@ -252,6 +306,9 @@
       const bad = (el, t) => { say(t); el.focus(); form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); };
       if (!r.first) return bad(f.first, 'Please enter your first name.');
       if (!r.last) return bad(f.last, 'Please enter your last name.');
+      const unanswered = members.findIndex(m => m.coming == null); // asked right under the name, so checked first
+      if (unanswered >= 0) return bad(partyList.querySelector(`input[name="m${unanswered}"]`),
+        'Please tell us whether ' + members[unanswered].first + ' is coming.');
       const missing = DAYS.find(([k]) => !r[k]);
       if (missing) return bad(form.querySelector(`input[name=${missing[0]}]`), 'Please answer yes or no for ' + missing[1].split(' ·')[0] + '.');
       await lookup(); // in case they typed their name and hit send without leaving the field
@@ -263,7 +320,19 @@
         if (empty) return bad(empty, allowed === 1 ? 'Please add your plus-one’s name.' : 'Please add a name for each guest.');
         r.guestNames = inputs.map(i => cap(tidy(i.value)));
       }
-      if (members.length) { r.companions = ticked(); r.party = ''; }
+      if (members.length) {
+        for (const [i, m] of members.entries()) {
+          if (!m.coming) continue;
+          const d = daysOf(m), gap = DAYS.find(([k]) => !d[k]);
+          if (gap) return bad(othersList.querySelector(`input[name="m${i}${gap[0]}"]`) || form.querySelector(`input[name=${gap[0]}]`),
+            'Please answer ' + DAY_NAMES[gap[0]] + ' for ' + m.first + '.');
+          if (DAYS.every(([k]) => d[k] === 'Not attending')) return bad(
+            othersList.querySelector(`input[name="m${i}thursday"]`) || partyList.querySelector(`input[name="m${i}"]`),
+            m.first + ' is marked as coming but not on any day — change their days, or choose No.');
+        }
+        r.companions = members.map(m => Object.assign({ first: m.first, last: m.last, coming: !!m.coming }, m.coming ? daysOf(m) : {}));
+        r.party = '';
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) return bad(f.email, 'Please add a valid email address.');
       if (!endpoint) return say('RSVPs aren’t connected yet, so this reply can’t be sent. Please message us on WhatsApp instead.');
 
@@ -274,7 +343,10 @@
         delete r.website;
         r.extrasAllowed = out.extrasAllowed || 0; // the database is the source of truth
         if (!r.extrasAllowed) { delete r.extras; delete r.guestNames; }
-        r.members = members; r.companionNames = out.companions || [];
+        r.members = members.map(m => ({ first: m.first, last: m.last }));
+        r.memberState = members.map(m => ({ first: m.first, last: m.last, coming: m.coming, custom: m.custom, days: { ...m.days } }));
+        r.companionResults = out.companions || []; // what the database actually saved
+        delete r.companions;
         store.set(r);
         showDone(r, !!out.emailed);
       } catch (err) {

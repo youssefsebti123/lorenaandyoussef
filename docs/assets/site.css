@@ -155,11 +155,15 @@ main{text-shadow:0 1px 2px rgba(20,10,3,.55),0 0 22px rgba(20,10,3,.45)}
 .resp legend .note{display:block;font-family:var(--sans)}
 .resp .yn{display:flex;flex-wrap:wrap;gap:12px 22px}
 #extras-names{margin-top:18px}
+/* Your invitation (other people on the same invitation) */
+.party-h{font-size:12px;font-weight:400;letter-spacing:.3em;text-transform:uppercase;color:var(--acc);margin:34px 0 2px}
+#party-intro{margin-bottom:2px}
 .resp.stack{grid-template-columns:1fr}
-.ticks{display:flex;flex-direction:column;gap:12px;margin-top:4px}
-.ticks label{display:flex;gap:12px;align-items:center;cursor:pointer;font-family:var(--serif);font-size:21px}
-.resp input[type=checkbox]{border-radius:4px}
-.resp input[type=checkbox]::after{border-radius:2px}
+.other .note b{font-weight:400;color:var(--ink)}
+.mday{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:7px 0}
+.mday span{font-size:15px;letter-spacing:.04em}
+.change{justify-self:start;font-family:var(--serif);font-style:italic;font-size:18px;border-bottom:1px solid currentColor;padding:0;margin-top:4px}
+.change:hover{color:var(--acc)}
 .finder{margin-bottom:6px}
 .picks{list-style:none;margin:-8px 0 0;border:1px solid rgba(246,235,208,.45);border-top:0;background:rgba(32,18,6,.88)}
 .picks li+li{border-top:1px solid var(--line)}

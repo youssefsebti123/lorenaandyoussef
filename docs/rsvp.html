@@ -49,6 +49,14 @@
         <div class="field"><label for="last">Last name</label><input id="last" name="last" autocomplete="family-name" maxlength="80" required></div>
       </div>
 
+      <!-- Shown when the chosen name shares an invitation with other people (filled in by site.js) -->
+      <div id="party-box" hidden>
+        <p class="party-h">Your invitation</p>
+        <p class="note" id="party-intro"></p>
+        <div id="party-list"></div>
+      </div>
+      <p class="party-h" id="my-days-h" hidden>Your days</p>
+
       <fieldset class="resp"><legend><span class="item">Thursday 6 · Marrakech day</span><span class="note">Dinner plans are provisional</span></legend>
         <div class="yn"><label><input type="radio" name="thursday" value="Attending" required> Yes</label><label><input type="radio" name="thursday" value="Not attending"> No</label></div></fieldset>
       <fieldset class="resp"><legend><span class="item">Friday 7 · Welcome drinks</span><span class="note">5 – 10 pm · No dinner</span></legend>
@@ -56,9 +64,9 @@
       <fieldset class="resp"><legend><span class="item">Saturday 8 · The wedding</span><span class="note">Ceremony at 4 pm</span></legend>
         <div class="yn"><label><input type="radio" name="saturday" value="Attending" required> Yes</label><label><input type="radio" name="saturday" value="Not attending"> No</label></div></fieldset>
 
-      <div id="party-box" hidden>
-        <fieldset class="resp stack"><legend><span class="item">Who’s coming with you?</span><span class="note">Also on your invitation. Tick everyone who’s coming — they’ll get the same answers as you. Coming on different days? They can reply with their own name.</span></legend>
-          <div class="ticks" id="party-list"></div></fieldset>
+      <div id="others-box" hidden>
+        <p class="party-h">Everyone else’s days</p>
+        <div id="others-list"></div>
       </div>
 
       <div id="extras" hidden>
