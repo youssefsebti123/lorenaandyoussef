@@ -274,7 +274,8 @@ begin
   end if;
 
   -- Drop anyone this person answered for before but not now (unless they've since replied themselves).
-  if me.id is not null then
+  -- Only when the form actually sent the invitation list, so a page that couldn't load it never wipes answers.
+  if me.id is not null and json_typeof(r->'companions') = 'array' then
     delete from public.rsvps
     where replied_by = me.id and guest_id <> me.id and not (guest_id = any(companion_ids));
   end if;
