@@ -37,13 +37,12 @@ create table if not exists public.rsvps (
   saturday          text not null,
   extra_guests      int,             -- null = this guest wasn't offered any
   guest_names       text not null default '',
-  also_replying_for text not null default '',
-  dietary           text not null default '',
-  thursday_notes    text not null default ''
+  also_replying_for text not null default ''
 );
 alter table public.rsvps add column if not exists guest_id   bigint references public.guests (id) on delete set null;
 alter table public.rsvps add column if not exists replied_by bigint references public.guests (id) on delete set null;
-alter table public.rsvps add column if not exists added_by   text not null default ''; -- "Habib El Amrani" if he ticked this person
+alter table public.rsvps add column if not exists added_by   text not null default ''; -- "Habib El Amrani" if he answered for this person
+alter table public.rsvps drop column if exists dietary, drop column if exists thursday_notes; -- removed from the form
 drop index if exists public.rsvps_person;
 create unique index if not exists rsvps_guest on public.rsvps (guest_id) where guest_id is not null;
 
@@ -52,8 +51,9 @@ create table if not exists public.log (
   id                bigint generated always as identity primary key,
   received_at       timestamptz not null default now(),
   first text, last text, email text, thursday text, friday text, saturday text,
-  extra_guests int, guest_names text, also_replying_for text, dietary text, thursday_notes text
+  extra_guests int, guest_names text, also_replying_for text
 );
+alter table public.log drop column if exists dietary, drop column if exists thursday_notes;
 alter table public.log add column if not exists guest_id   bigint;
 alter table public.log add column if not exists companions text;
 
@@ -176,8 +176,6 @@ declare
   v_fri   text := r->>'friday';
   v_sat   text := r->>'saturday';
   v_party text := public.tidy(r->>'party', 300);
-  v_diet  text := public.tidy(r->>'dietary', 1000);
-  v_notes text := public.tidy(r->>'thursdayNotes', 1000);
   me public.guests;
   allowed int;
   v_extras int;
@@ -231,13 +229,13 @@ begin
       first = coalesce(me.first, v_first), last = coalesce(me.last, v_last), email = v_email,
       thursday = v_thu, friday = v_fri, saturday = v_sat,
       extra_guests = v_extras, guest_names = array_to_string(v_names, ', '),
-      also_replying_for = v_party, dietary = v_diet, thursday_notes = v_notes
+      also_replying_for = v_party
     where id = existing_id;
   else
     insert into public.rsvps (guest_id, replied_by, first, last, email, thursday, friday, saturday, extra_guests,
-                              guest_names, also_replying_for, dietary, thursday_notes)
+                              guest_names, also_replying_for)
     values (me.id, me.id, coalesce(me.first, v_first), coalesce(me.last, v_last), v_email, v_thu, v_fri, v_sat,
-            v_extras, array_to_string(v_names, ', '), v_party, v_diet, v_notes);
+            v_extras, array_to_string(v_names, ', '), v_party);
   end if;
 
   -- The other people on this invitation, answered by this person: {first, last, coming, thursday, friday, saturday}.
@@ -281,9 +279,9 @@ begin
   end if;
 
   insert into public.log (guest_id, first, last, email, thursday, friday, saturday, extra_guests, guest_names,
-                          also_replying_for, dietary, thursday_notes, companions)
+                          also_replying_for, companions)
   values (me.id, v_first, v_last, v_email, v_thu, v_fri, v_sat, v_extras, array_to_string(v_names, ', '),
-          v_party, v_diet, v_notes, case when companions_out = '[]' then '' else companions_out::text end);
+          v_party, case when companions_out = '[]' then '' else companions_out::text end);
 
   -- Confirmation email via Resend (only if a key is stored in Vault as "resend_api_key"). Sent in the background.
   select decrypted_secret into key from vault.decrypted_secrets where name = 'resend_api_key' limit 1;
