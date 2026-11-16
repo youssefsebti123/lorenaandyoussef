@@ -106,10 +106,36 @@
       return res.json();
     };
 
-    /* Plus-one: only guests marked "Yes" in the sheet's Guests tab see this. The script re-checks on submit. */
-    const plusBox = $('#plusone'), plusName = $('#plusone-name');
-    let lookedUp = '';
-    const showPlusName = () => { plusName.hidden = !(form.querySelector('input[name=plusOne]:checked')?.value === 'Yes'); };
+    const el = (tag, props, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+
+    /* Extra guests: only people with "Yes" or a number in the sheet's Guests tab see this. The script re-checks on submit. */
+    const extrasBox = $('#extras'), extrasOpts = $('#extras-opts'), extrasNames = $('#extras-names');
+    let allowed = 0, lookedUp = '';
+    const typed = []; // guest names typed so far, kept if the count changes
+    const chosen = () => { const c = form.querySelector('input[name=extras]:checked'); return c ? +c.value : null; };
+    const renderNames = () => {
+      $$('input', extrasNames).forEach((inp, i) => { typed[i] = inp.value; });
+      extrasNames.replaceChildren();
+      for (let i = 0; i < (chosen() || 0); i++) {
+        const label = allowed === 1 ? 'Your plus-one’s full name' : 'Guest ' + (i + 1) + ' · full name';
+        extrasNames.append(el('div', { className: 'field' },
+          el('label', { htmlFor: 'guest' + i, textContent: label }),
+          el('input', { id: 'guest' + i, autocomplete: 'off', maxLength: 160, value: typed[i] || '' })));
+      }
+    };
+    const setAllowed = (n, pick) => {
+      allowed = n; extrasBox.hidden = !n; extrasOpts.replaceChildren();
+      if (!n) return renderNames();
+      $('#extras-q').textContent = n === 1 ? 'Bringing your plus-one?' : 'How many guests are you bringing?';
+      $('#extras-note').textContent = (n === 1 ? 'Your invitation includes a guest' : 'Your invitation includes up to ' + n + ' guests') +
+        ' — they’ll join you on the days you said yes to.';
+      const opts = n === 1 ? [[1, 'Yes'], [0, 'No']] : [[0, 'None']].concat(Array.from({ length: n }, (_, i) => [i + 1, String(i + 1)]));
+      opts.forEach(([v, t]) => extrasOpts.append(el('label', {},
+        el('input', { type: 'radio', name: 'extras', value: v, checked: pick === v }), ' ' + t)));
+      renderNames();
+    };
+    extrasOpts.addEventListener('change', renderNames);
+
     const lookup = async () => {
       const first = tidy(form.elements.first.value), last = tidy(form.elements.last.value);
       const key = (first + '|' + last).toLowerCase();
@@ -118,23 +144,60 @@
       try {
         const out = await post({ action: 'lookup', first, last });
         if (key !== lookedUp) return; // name changed while we were asking
-        plusBox.hidden = !out.plusOne;
+        const n = out.extras != null ? out.extras : (out.plusOne ? 1 : 0);
+        if (n !== allowed) setAllowed(n, chosen());
       } catch { /* lookup is a nicety — the form still works without it */ }
     };
-    ['first', 'last'].forEach(k => form.elements[k].addEventListener('change', lookup));
-    $$('input[name=plusOne]', form).forEach(el => el.addEventListener('change', showPlusName));
+    // A different name means a different invitation: drop the previous person's guest answers.
+    const forget = () => { typed.length = 0; extrasNames.replaceChildren(); $$('input', extrasOpts).forEach(i => { i.checked = false; }); };
+    ['first', 'last'].forEach(k => form.elements[k].addEventListener('change', () => { forget(); lookup(); }));
+
+    /* Find your name: suggestions from the Guests tab once 3+ letters are typed. */
+    const find = $('#find'), picks = $('#find-results');
+    let seq = 0, timer;
+    const showPicks = (matches, note) => {
+      picks.replaceChildren(...matches.map(p => el('li', {}, el('button', {
+        type: 'button', textContent: p.first + ' ' + p.last, onclick: () => choose(p) }))));
+      if (note) picks.append(el('li', { className: 'none', textContent: note }));
+      picks.hidden = !matches.length && !note;
+    };
+    const choose = p => {
+      form.elements.first.value = p.first; form.elements.last.value = p.last;
+      find.value = p.first + ' ' + p.last; seq++; showPicks([]);
+      forget(); lookup(); form.querySelector('input[name=thursday]').focus();
+    };
+    find.addEventListener('input', () => {
+      clearTimeout(timer);
+      const q = tidy(find.value), my = ++seq;
+      if (!endpoint || q.replace(/\s/g, '').length < 3) return showPicks([]);
+      timer = setTimeout(async () => {
+        showPicks([], 'Searching…');
+        try {
+          const out = await post({ action: 'search', q });
+          if (my !== seq) return; // they kept typing
+          const m = out.matches || [];
+          showPicks(m, m.length ? '' : 'No match — just type your name below.');
+        } catch { if (my === seq) showPicks([]); }
+      }, 300);
+    });
+    find.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); picks.querySelector('button')?.click(); } // don't submit the form
+      if (e.key === 'Escape') showPicks([]);
+    });
 
     const fill = r => {
-      ['first', 'last', 'email', 'party', 'dietary', 'thursdayNotes', 'plusOneName'].forEach(k => { form.elements[k].value = r[k] || ''; });
-      DAYS.concat([['plusOne']]).forEach(([k]) => { const el = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (el) el.checked = true; });
-      plusBox.hidden = !r.plusOne; showPlusName();
+      ['first', 'last', 'email', 'party', 'dietary', 'thursdayNotes'].forEach(k => { form.elements[k].value = r[k] || ''; });
+      DAYS.forEach(([k]) => { const c = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (c) c.checked = true; });
+      typed.length = 0; (r.guestNames || []).forEach((n, i) => { typed[i] = n; });
+      extrasNames.replaceChildren(); setAllowed(r.extrasAllowed || 0, r.extras != null ? r.extras : null);
     };
     const showDone = (r, emailed) => {
       $('#thanks').textContent = 'Thank you, ' + r.first + '.';
       $('#done-sub').textContent = emailed ? 'Your reply has been saved — a copy is on its way to ' + r.email + '.' : 'Your reply has been saved.';
       const plans = $('#plans'); plans.replaceChildren();
       const rows = DAYS.map(([k, label]) => [label, r[k]]);
-      if (r.plusOne) rows.push(['Plus-one', r.plusOne === 'Yes' ? r.plusOneName : 'Not bringing one']);
+      if (r.extrasAllowed === 1) rows.push(['Plus-one', r.extras ? r.guestNames[0] : 'Not bringing one']);
+      else if (r.extrasAllowed) rows.push(['Guests with you', r.extras ? r.guestNames.join(', ') : 'None']);
       rows.forEach(([label, val]) => {
         const row = document.createElement('div'); row.className = 'row';
         const h = document.createElement('p'); h.className = 'item'; h.textContent = label;
@@ -165,11 +228,13 @@
       const missing = DAYS.find(([k]) => !r[k]);
       if (missing) return bad(form.querySelector(`input[name=${missing[0]}]`), 'Please answer yes or no for ' + missing[1].split(' ·')[0] + '.');
       await lookup(); // in case they typed their name and hit send without leaving the field
-      if (!plusBox.hidden) {
-        r.plusOne = form.querySelector('input[name=plusOne]:checked')?.value || '';
-        r.plusOneName = r.plusOne === 'Yes' ? cap(tidy(f.plusOneName.value)) : '';
-        if (!r.plusOne) return bad(form.querySelector('input[name=plusOne]'), 'Please tell us whether you’re bringing your plus-one.');
-        if (r.plusOne === 'Yes' && !r.plusOneName) return bad(f.plusOneName, 'Please add your plus-one’s name.');
+      if (allowed) {
+        r.extras = chosen();
+        if (r.extras === null) return bad(extrasOpts.querySelector('input'),
+          allowed === 1 ? 'Please tell us whether you’re bringing your plus-one.' : 'Please tell us how many guests you’re bringing.');
+        const inputs = $$('input', extrasNames), empty = inputs.find(i => !tidy(i.value));
+        if (empty) return bad(empty, allowed === 1 ? 'Please add your plus-one’s name.' : 'Please add a name for each guest.');
+        r.guestNames = inputs.map(i => cap(tidy(i.value)));
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) return bad(f.email, 'Please add a valid email address.');
       if (!endpoint) return say('RSVPs aren’t connected yet, so this reply can’t be sent. Please message us on WhatsApp instead.');
@@ -179,7 +244,8 @@
         const out = await post(r);
         if (!out.ok) throw new Error(out.error || 'rejected');
         delete r.website;
-        if (!out.plusOneAllowed) { delete r.plusOne; delete r.plusOneName; } // the sheet is the source of truth
+        r.extrasAllowed = out.extrasAllowed || 0; // the sheet is the source of truth
+        if (!r.extrasAllowed) { delete r.extras; delete r.guestNames; }
         store.set(r);
         showDone(r, !!out.emailed);
       } catch (err) {

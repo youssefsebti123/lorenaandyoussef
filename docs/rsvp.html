@@ -37,7 +37,13 @@
     </div>
 
     <form class="form" id="rsvp-form" novalidate>
-      <p class="body center">Enter your name as it appears on your invitation.</p>
+      <div class="field finder">
+        <label for="find">Find your name</label>
+        <span class="hint" id="find-hint">Type a few letters of your first or last name, then pick yourself from the list.</span>
+        <input id="find" type="search" autocomplete="off" maxlength="80" aria-describedby="find-hint" aria-controls="find-results">
+        <ul id="find-results" class="picks" aria-live="polite" hidden></ul>
+      </div>
+      <p class="note">Not on the list? Just type your name as it appears on your invitation.</p>
       <div class="formrow">
         <div class="field"><label for="first">First name</label><input id="first" name="first" autocomplete="given-name" maxlength="80" required></div>
         <div class="field"><label for="last">Last name</label><input id="last" name="last" autocomplete="family-name" maxlength="80" required></div>
@@ -50,10 +56,10 @@
       <fieldset class="resp"><legend><span class="item">Saturday 8 · The wedding</span><span class="note">Ceremony at 4 pm</span></legend>
         <div class="yn"><label><input type="radio" name="saturday" value="Attending" required> Yes</label><label><input type="radio" name="saturday" value="Not attending"> No</label></div></fieldset>
 
-      <div id="plusone" hidden>
-        <fieldset class="resp"><legend><span class="item">Bringing your plus-one?</span><span class="note">Your invitation includes a guest — they’ll join you on the days you said yes to.</span></legend>
-          <div class="yn"><label><input type="radio" name="plusOne" value="Yes"> Yes</label><label><input type="radio" name="plusOne" value="No"> No</label></div></fieldset>
-        <div class="field" id="plusone-name" hidden style="margin-top:18px"><label for="plusOneName">Your plus-one’s full name</label><input id="plusOneName" name="plusOneName" autocomplete="off" maxlength="160"></div>
+      <div id="extras" hidden>
+        <fieldset class="resp"><legend><span class="item" id="extras-q">Bringing your plus-one?</span><span class="note" id="extras-note"></span></legend>
+          <div class="yn" id="extras-opts"></div></fieldset>
+        <div id="extras-names"></div>
       </div>
 
       <div class="field" style="margin-top:22px"><label for="email">Email</label><span class="hint" id="email-hint">We’ll send a copy of your reply here.</span><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required aria-describedby="email-hint"></div>
