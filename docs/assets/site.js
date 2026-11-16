@@ -262,7 +262,7 @@
     });
 
     const fill = r => {
-      ['first', 'last', 'email', 'party', 'dietary', 'thursdayNotes'].forEach(k => { form.elements[k].value = r[k] || ''; });
+      ['first', 'last', 'email', 'party'].forEach(k => { form.elements[k].value = r[k] || ''; });
       DAYS.forEach(([k]) => { const c = form.querySelector(`input[name=${k}][value="${r[k]}"]`); if (c) c.checked = true; });
       typed.length = 0; (r.guestNames || []).forEach((n, i) => { typed[i] = n; });
       extrasNames.replaceChildren(); setAllowed(r.extrasAllowed || 0, r.extras != null ? r.extras : null);
@@ -298,7 +298,7 @@
       const f = form.elements;
       const r = {
         first: cap(tidy(f.first.value)), last: cap(tidy(f.last.value)), email: tidy(f.email.value).toLowerCase(),
-        party: tidy(f.party.value), dietary: f.dietary.value.trim(), thursdayNotes: f.thursdayNotes.value.trim(),
+        party: tidy(f.party.value),
         website: f.website.value // honeypot
       };
       DAYS.forEach(([k]) => { const c = form.querySelector(`input[name=${k}]:checked`); r[k] = c ? c.value : ''; });
