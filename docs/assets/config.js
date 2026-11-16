@@ -1,3 +1,7 @@
-// Paste your Google Apps Script web-app URL here (it ends in /exec).
-// See SETUP.md → "Connect RSVPs to Google Sheets".
-window.RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzu0rJWEx4hfScYM2LqvGwPsmwEsmF5luhquxwH7iCkBwT90V_cqrUxkWxX4mXcP3iiaA/exec';
+// Where RSVPs are stored: the Supabase project "wedding-rsvp" (see SETUP.md).
+// This is the *publishable* key — it's meant to be public. It can only search names and save replies;
+// it can't read the guest list or anyone's answers.
+window.RSVP_API = {
+  url: 'https://aiacsujoqmhdwlkfodjw.supabase.co',
+  key: 'sb_publishable_ml7_01LKoahOdGLTTp9A6A_Njr_wDtU'
+};

@@ -88,7 +88,8 @@
   if (form) {
     const DAYS = [['thursday', 'Thursday 6 · Marrakech day'], ['friday', 'Friday 7 · Welcome drinks'], ['saturday', 'Saturday 8 · The wedding']];
     const KEY = 'ly-rsvp';
-    const endpoint = (window.RSVP_ENDPOINT || '').trim();
+    const api = window.RSVP_API || {};
+    const endpoint = api.url && api.key ? api.url : '';
     const ask = $('#ask'), done = $('#done'), msg = $('#msg'), send = $('#send');
     const store = {
       get() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
@@ -100,11 +101,17 @@
     const cap = s => s.replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
     const say = (t, ok) => { msg.textContent = t; msg.classList.toggle('ok', !!ok); };
 
-    const post = async body => {
-      // text/plain body = a "simple" request, so the browser skips the CORS preflight Apps Script can't answer
-      const res = await fetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+    // The database exposes three functions: search_guests, guest_extras, submit_rsvp (supabase/schema.sql).
+    const rpc = async (fn, args) => {
+      const res = await fetch(endpoint + '/rest/v1/rpc/' + fn, {
+        method: 'POST', headers: { apikey: api.key, 'Content-Type': 'application/json' }, body: JSON.stringify(args) });
+      if (!res.ok) throw new Error(fn + ' ' + res.status);
       return res.json();
     };
+    const post = body =>
+      body.action === 'search' ? rpc('search_guests', { q: body.q }) :
+      body.action === 'lookup' ? rpc('guest_extras', { first: body.first, last: body.last }).then(n => ({ extras: n })) :
+      rpc('submit_rsvp', { r: body });
 
     const el = (tag, props, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
 
@@ -181,8 +188,6 @@
         } catch { if (my === seq) showPicks([], 'Search isn’t working right now — just type your name below.'); }
       }, 300);
     });
-    // Google's script can take several seconds to wake up; nudge it now so the first search is quick.
-    if (endpoint) post({ action: 'search', q: '' }).catch(() => {});
     find.addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); picks.querySelector('button')?.click(); } // don't submit the form
       if (e.key === 'Escape') showPicks([]);

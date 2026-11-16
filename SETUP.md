@@ -10,35 +10,31 @@ docs/
   details.html       dress code + good to know
   rsvp.html          the form
   404.html           shown for any wrong link
-  assets/config.js   ← the one line you edit (RSVP endpoint)
-rsvp-apps-script.gs  ← paste into Google Apps Script (step 1)
+  assets/config.js   ← where RSVPs go (Supabase project URL + public key)
+supabase/schema.sql  ← the database: tables, headcount views and the 3 functions the form calls
 ```
 
 ---
 
-## 1. RSVPs → Google Sheets (live since 14 Nov 2026)
+## 1. RSVPs → Supabase (since 16 Nov 2026)
 
-Replies go straight into a Google Sheet in **youssefsebti123@gmail.com**'s Drive. Nothing is stored on the website itself.
+Replies go into a free Supabase database. Nothing is stored on the website itself.
 
-- **Sheet:** [Lorena & Youssef RSVPs](https://docs.google.com/spreadsheets/d/1sC2XYuuZ4qbiuzuLSNZ0JvxlV7AyLdRl4K7QElYKgJM/edit)
-- **Script:** in the sheet, **Extensions → Apps Script** ("RSVP receiver"), a copy of `rsvp-apps-script.gs`.
-- **Web app:** deployed as *Execute as: Me · Who has access: Anyone*. Its `/exec` URL is in `docs/assets/config.js`. Opening it in a browser shows `{"ok":true,"service":"rsvp"}`.
-- Optional: set `NOTIFY_EMAIL` at the top of the script to your address to get an email for every reply (then redeploy, see below).
+- **Dashboard:** [supabase.com/dashboard](https://supabase.com/dashboard/project/aiacsujoqmhdwlkfodjw) → organisation **Lorena & Youssef** (free plan, separate from Caselane) → project **wedding-rsvp** (Frankfurt). Sign in with GitHub.
+- **Table editor** (left sidebar → grid icon):
+  - **guests** — the invite list (129 people, imported from Joy via the old sheet). Edit rows right there: `first`, `last`, `plus_ones` (0 = none, 1 = a plus-one, 2+ = up to that many extra guests), `notes`. Changes apply to the form immediately.
+  - **rsvps** — one row per guest (matched on name + email). Sending the form again updates the row and sets `updated_at`. `extra_guests` = how many they're bringing (empty if they weren't offered any), `guest_names` lists them.
+  - **log** — every submission ever received, so nothing is lost when someone edits their reply.
+  - **headcount** — live totals per day (guests + extra guests). **overview** — replies received, guests on the list, extra spots offered, and how many haven't replied yet.
+  - Any table → **Export → CSV** to open it in Sheets/Excel.
+- **How the form talks to it:** `docs/assets/config.js` holds the project URL and the *publishable* key, which is public by design. That key can only call three functions — `search_guests` (Find your name: names only, up to 10, after 3+ letters), `guest_extras` (how many guests a name may bring) and `submit_rsvp` (validates and saves; caps extra guests at the list's number). It can't read the tables; tested.
+- **Changing the database:** edit `supabase/schema.sql` and run it in the dashboard's **SQL editor**. It's safe to re-run.
+- **No confirmation emails** for now (the form shows guests their answers on screen and they can edit later from the same device). To add them: a Resend/Brevo key stored in Supabase Vault as `resend_api_key` — `submit_rsvp` already sends one when that secret exists (from `rsvp@lorenaandyoussef.com`, which needs the sending domain verified).
+- **Free-plan pause:** Supabase pauses a free project after 7 days without any requests. Guests using the form count as activity. If it does pause, Supabase emails you first and **Restore** in the dashboard brings it back with all data. To prevent it entirely, run `gh auth refresh -h github.com -s workflow` once and ask for the daily keep-alive GitHub Action.
 
-**Starting over in another sheet:** Extensions → Apps Script, paste `rsvp-apps-script.gs`, choose `setup` next to ▷ Run and click Run (approve Google's prompt: Advanced → Go to … → Allow). That builds the tabs. Then Deploy → New deployment → Web app (Me / Anyone), and put the new `/exec` URL in `docs/assets/config.js`.
+The old Google setup (sheet "Lorena & Youssef RSVPs" + Apps Script "RSVP receiver") is no longer used by the site; it's in git history if ever needed.
 
-What's in the sheet:
-- **Guests** tab — the invite list (imported from Joy on 16 Nov 2026): `First | Last | Plus ones | Notes`.
-  - *Plus ones*: **Yes** = one extra guest, a **number** (2, 3…) = up to that many, **No**/blank = none. Those guests get "Bringing your plus-one?" or "How many guests are you bringing?" on the form, plus a name box per guest. The script re-checks this on submit, so nobody can add guests by fiddling with the page.
-  - The form's **Find your name** box searches this tab once 3+ letters are typed (any part of the first or last name, ignoring capitals and accents) and shows up to 6 names. Picking one fills in the name exactly as listed. Trade-off: anyone with the link can look up guest names this way — the same as Joy's "find your invitation".
-- **RSVPs** tab — one row per guest (matched on name + email). If they send the form again, that row is updated and the *Updated* column is stamped. *Extra guests* is how many they're bringing (blank if they weren't offered any); *Guest names* lists them.
-- **Log** tab — every submission ever received, so nothing is lost.
-- **Summary** tab — live headcount per day, including extra guests. Running `setup` again rebuilds this tab.
-- Guests get a plain-text copy of their reply by email (turn off with `SEND_CONFIRMATION = false`). Gmail allows ~100 of these a day on a free account; if you hit the limit the reply is still saved.
-
-If you change the script later, use **Deploy → Manage deployments → Edit → Version: New version** so the URL stays the same.
-
-If `config.js` ever has no URL, the RSVP page shows a banner saying replies can't be sent — so you can't accidentally publish a form that silently drops answers.
+If `config.js` ever has no URL/key, the RSVP page shows a banner saying replies can't be sent — so you can't accidentally publish a form that silently drops answers.
 
 ---
 
@@ -76,9 +72,9 @@ The site tells search engines not to index it (`robots.txt` + `noindex`), so it 
 - "Kindly reply by 31 December" → "31 December 2026".
 
 **RSVP**
-- The old form said "Your reply has been saved" even when nothing was connected, and couldn't tell if the send failed. Now it only confirms after the sheet answers OK, and shows a clear error otherwise.
-- "Email for confirmation" never sent anything — it now does.
-- Added "Also replying for" (couples on one invitation), returning guests see their answers and can edit, plus spam and spreadsheet-formula protection.
+- The old form said "Your reply has been saved" even when nothing was connected, and couldn't tell if the send failed. Now it only confirms after the database answers OK, and shows a clear error otherwise.
+- "Email for confirmation" never sent anything. The email field is now just for contacting guests (no confirmation emails yet — see section 1).
+- Added "Also replying for" (couples on one invitation), returning guests see their answers and can edit, plus spam protection, a Find-your-name search and multiple extra guests per invitation.
 
 ## Still yours to fill in
 - Dress codes (Details page) and Thursday's meeting point / dinner restaurant.
