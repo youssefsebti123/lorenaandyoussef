@@ -25,8 +25,11 @@ function doPost(e) {
   try { d = JSON.parse(e.postData.contents); } catch (err) { return reply({ ok: false, error: 'bad request' }); }
   const clean = (v, max) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
 
-  // "Find your name": names only, at most 6, and only once 3+ letters are typed.
-  if (d.action === 'search') return reply({ ok: true, matches: search(clean(d.q, 80)) });
+  // "Find your name": names only, at most 10 (more = "keep typing"), and only once 3+ letters are typed.
+  if (d.action === 'search') {
+    const m = search(clean(d.q, 80));
+    return reply({ ok: true, matches: m.slice(0, 10), more: m.length > 10 });
+  }
   // How many extra guests this name may bring — a number, nothing else about the list.
   if (d.action === 'lookup') {
     const n = extrasFor(clean(d.first, 80), clean(d.last, 80));
@@ -140,7 +143,7 @@ function search(q) {
     if (seen[g.key] || !words.every(w => parts.some(p => p.indexOf(w) === 0))) continue;
     seen[g.key] = true;
     out.push({ first: g.first, last: g.last });
-    if (out.length === 6) break;
+    if (out.length === 11) break; // one extra, so the form knows to say "keep typing"
   }
   return out;
 }
