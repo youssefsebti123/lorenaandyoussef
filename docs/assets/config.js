@@ -1,5 +1,5 @@
 // Where RSVPs are stored: the Supabase project "wedding-rsvp" (see SETUP.md).
-// This is the *publishable* key — it's meant to be public. It can only search names and save replies;
+// This is the *publishable* key, which is meant to be public. It can only search names and save replies;
 // it can't read the guest list or anyone's answers.
 window.RSVP_API = {
   url: 'https://aiacsujoqmhdwlkfodjw.supabase.co',

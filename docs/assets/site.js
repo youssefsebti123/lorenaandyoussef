@@ -1,4 +1,4 @@
-/* Lorena & Youssef — page behaviour. Each block only runs on the page that has its elements. */
+/* Lorena & Youssef: page behaviour. Each block only runs on the page that has its elements. */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -20,7 +20,7 @@
       { n: 'The Palmeraie', here: true, label: [31.68, -7.938], c: [31.664, -7.954], r: 2000, col: '#E9D9A0',
         d: 'Where the venue is. Quiet palm groves, big gardens and pools. Les Deux Tours and Les Palmiers are here.' },
       { n: 'The Medina', c: [31.63, -7.987], r: 1100, col: '#EBBB62',
-        d: 'Traditional riads around Jemaa el-Fna. The most atmospheric stay — courtyards rather than gardens, and little outdoor space.' },
+        d: 'Traditional riads around Jemaa el-Fna. The most atmospheric stay, with courtyards rather than gardens and little outdoor space.' },
       { n: 'Hivernage', c: [31.622, -8.009], r: 650, col: '#C98674',
         d: 'The smart centre: five-star hotels, restaurants and nightlife, 15–20 minutes’ walk from Jemaa el-Fna.' },
       { n: 'Amelkis', c: [31.6127, -7.9356], r: 1200, col: '#A9D6BE',
@@ -45,10 +45,10 @@
     });
 
     const init = () => {
-      if (!window.L) { mapEl.textContent = 'The map could not load — check your connection.'; return; }
+      if (!window.L) { mapEl.textContent = 'The map could not load. Check your connection.'; return; }
       const map = L.map(mapEl, { scrollWheelZoom: false });
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        { attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
+        { attribution: 'Tiles © Esri. Sources: Esri, HERE, Garmin, © OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
       const popup = (title, text) => { const d = document.createElement('div'); const b = document.createElement('b'); b.textContent = title; d.append(b, text); return d; };
       const circles = AREAS.map(a => {
         const c = L.circle(a.c, { radius: a.r, color: a.col, weight: 2, fillColor: a.col, fillOpacity: .38 }).addTo(map)
@@ -135,7 +135,7 @@
       if (!n) return renderNames();
       $('#extras-q').textContent = n === 1 ? 'Bringing your plus-one?' : 'How many guests are you bringing?';
       $('#extras-note').textContent = (n === 1 ? 'Your invitation includes a guest' : 'Your invitation includes up to ' + n + ' guests') +
-        ' — they’ll join you on the days you said yes to.';
+        '. They’ll join you on the days you said yes to.';
       const opts = n === 1 ? [[1, 'Yes'], [0, 'No']] : [[0, 'None']].concat(Array.from({ length: n }, (_, i) => [i + 1, String(i + 1)]));
       opts.forEach(([v, t]) => extrasOpts.append(el('label', {},
         el('input', { type: 'radio', name: 'extras', value: v, checked: pick === v }), ' ' + t)));
@@ -189,7 +189,7 @@
       partyBox.hidden = myDaysH.hidden = !any;
       partyField.hidden = any; // these questions replace the free-text "Also replying for"
       partyIntro.textContent = any ? andList(members.map(m => m.first)) + (members.length > 1 ? ' are' : ' is') +
-        ' on your invitation too — let us know who’s coming.' : '';
+        ' on your invitation too. Let us know who’s coming.' : '';
       partyList.replaceChildren(...members.map((m, i) => el('fieldset', { className: 'resp' },
         el('legend', {}, el('span', { className: 'item', textContent: m.first + ' ' + m.last }),
           el('span', { className: 'note', textContent: 'Coming?' })),
@@ -218,7 +218,7 @@
         const n = out.extras || 0;
         if (n !== allowed) setAllowed(n, chosen());
         setMembers(out.members, members);
-      } catch { /* lookup is a nicety — the form still works without it */ }
+      } catch { /* lookup is a nicety; the form still works without it */ }
     };
     // A different name means a different invitation: drop the previous person's guest answers.
     const forget = () => {
@@ -251,9 +251,9 @@
           const out = await post({ action: 'search', q });
           if (my !== seq) return; // they kept typing
           const m = out.matches || [];
-          showPicks(m, out.more ? 'More names match — keep typing to narrow it down.'
-            : m.length ? '' : 'No match — just type your name below.');
-        } catch { if (my === seq) showPicks([], 'Search isn’t working right now — just type your name below.'); }
+          showPicks(m, out.more ? 'More names match. Keep typing to narrow it down.'
+            : m.length ? '' : 'No match. Just type your name below.');
+        } catch { if (my === seq) showPicks([], 'Search isn’t working right now. Just type your name below.'); }
       }, 300);
     });
     find.addEventListener('keydown', e => {
@@ -270,7 +270,7 @@
     };
     const showDone = (r, emailed) => {
       $('#thanks').textContent = 'Thank you, ' + r.first + '.';
-      $('#done-sub').textContent = emailed ? 'Your reply has been saved — a copy is on its way to ' + r.email + '.' : 'Your reply has been saved.';
+      $('#done-sub').textContent = emailed ? 'Your reply has been saved. A copy is on its way to ' + r.email + '.' : 'Your reply has been saved.';
       const plans = $('#plans'); plans.replaceChildren();
       const rows = DAYS.map(([k, label]) => [label, r[k]]);
       (r.companionResults || []).forEach(c => {
@@ -328,7 +328,7 @@
             'Please answer ' + DAY_NAMES[gap[0]] + ' for ' + m.first + '.');
           if (DAYS.every(([k]) => d[k] === 'Not attending')) return bad(
             othersList.querySelector(`input[name="m${i}thursday"]`) || partyList.querySelector(`input[name="m${i}"]`),
-            m.first + ' is marked as coming but not on any day — change their days, or choose No.');
+            m.first + ' is marked as coming but not on any day. Change their days, or choose No.');
         }
         r.companions = members.map(m => Object.assign({ first: m.first, last: m.last, coming: !!m.coming }, m.coming ? daysOf(m) : {}));
         r.party = '';
@@ -350,7 +350,7 @@
         store.set(r);
         showDone(r, !!out.emailed);
       } catch (err) {
-        say('Sorry — your reply didn’t go through. Please try again, or message us on WhatsApp.');
+        say('Sorry, your reply didn’t go through. Please try again, or message us on WhatsApp.');
       } finally {
         send.disabled = false; send.textContent = 'Send my reply';
       }
