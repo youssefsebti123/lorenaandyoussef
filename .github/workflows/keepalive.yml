@@ -1,0 +1,23 @@
+# Free Supabase projects pause after 7 days without requests. This pings the RSVP database once a day so the
+# form keeps working even when no guest has visited for a while. It only calls the public name search
+# (the same thing the form does) with a word that matches nobody.
+name: Keep RSVP database awake
+
+on:
+  schedule:
+    - cron: "23 7 * * *" # every day, 07:23 UTC
+  workflow_dispatch: # "Run workflow" button in the Actions tab
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -fsS --retry 3 -X POST "https://aiacsujoqmhdwlkfodjw.supabase.co/rest/v1/rpc/search_guests" \
+            -H "apikey: sb_publishable_ml7_01LKoahOdGLTTp9A6A_Njr_wDtU" \
+            -H "Content-Type: application/json" \
+            -d '{"q":"keepalive"}'
